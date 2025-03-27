@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import { ConfigService } from '@hashgraph/json-rpc-config-service/dist/services';
+import { WS_CONSTANTS } from './constants';
+import WsMetricRegistry from '../metrics/wsMetricRegistry';
+import ConnectionLimiter from '../metrics/connectionLimiter';
 import { Relay } from '@hashgraph/json-rpc-relay/dist';
-import { RequestDetails } from '@hashgraph/json-rpc-relay/dist/lib/types';
+import { ConfigService } from '@hashgraph/json-rpc-config-service/dist/services';
 import { IJsonRpcRequest } from '@hashgraph/json-rpc-server/dist/koaJsonRpc/lib/IJsonRpcRequest';
 import { IJsonRpcResponse } from '@hashgraph/json-rpc-server/dist/koaJsonRpc/lib/IJsonRpcResponse';
 import { Logger } from 'pino';
-
-import ConnectionLimiter from '../metrics/connectionLimiter';
-import WsMetricRegistry from '../metrics/wsMetricRegistry';
-import { WS_CONSTANTS } from './constants';
+import { RequestDetails } from '@hashgraph/json-rpc-relay/dist/lib/types';
 
 const hasOwnProperty = (obj: any, prop: any) => Object.prototype.hasOwnProperty.call(obj, prop);
 const getRequestIdIsOptional = () => {
