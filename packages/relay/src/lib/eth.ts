@@ -81,7 +81,7 @@ export class EthImpl implements Eth {
   static defaultTxGas = numberTo0x(constants.TX_DEFAULT_GAS_DEFAULT);
   static gasTxBaseCost = numberTo0x(constants.TX_BASE_COST);
   static minGasTxHollowAccountCreation = numberTo0x(constants.MIN_TX_HOLLOW_ACCOUNT_CREATION_GAS);
-  static ethTxType = 'EthereumTransaction';
+  static EthereumTransactionType = 'EthereumTransaction';
   static defaultGasUsedRatio = 0.5;
   static feeHistoryZeroBlockCountResponse: IFeeHistory = {
     gasUsedRatio: null,
@@ -406,7 +406,7 @@ export class EthImpl implements Eth {
     let fee = 0;
     try {
       const block = await this.mirrorNodeClient.getBlock(blockNumber, requestDetails);
-      fee = await this.getFeeWeibars(EthImpl.ethFeeHistory, requestDetails, `lte:${block.timestamp.to}`);
+      fee = await this.getGasPriceInWeibars(requestDetails, `lte:${block.timestamp.to}`);
     } catch (error) {
       this.logger.warn(
         error,
@@ -485,41 +485,28 @@ export class EthImpl implements Eth {
     return feeHistory;
   }
 
-  private async getFeeWeibars(callerName: string, requestDetails: RequestDetails, timestamp?: string): Promise<number> {
-    let networkFees;
-
-    try {
-      networkFees = await this.mirrorNodeClient.getNetworkFees(requestDetails, timestamp, undefined);
-    } catch (e: any) {
-      this.logger.warn(
-        e,
-        `${requestDetails.formattedRequestId} Mirror Node threw an error while retrieving fees. Fallback to consensus node.`,
-      );
-    }
-
-    if (_.isNil(networkFees)) {
-      if (this.logger.isLevelEnabled('debug')) {
-        this.logger.debug(
-          `${requestDetails.formattedRequestId} Mirror Node returned no network fees. Fallback to consensus node.`,
-        );
-      }
-      networkFees = {
-        fees: [
-          {
-            gas: await this.hapiService.getSDKClient().getTinyBarGasFee(callerName, requestDetails),
-            transaction_type: EthImpl.ethTxType,
-          },
-        ],
-      };
-    }
+  /**
+   * Retrieves the current network gas price in weibars from the mirror node.
+   *
+   * This method fetches network fees from the mirror node for a specific timestamp (if provided)
+   * and converts the gas price from tinybars to weibars for Ethereum compatibility.
+   *
+   * @param {RequestDetails} requestDetails - The details of the request for logging and tracking
+   * @param {string} [timestamp] - Optional timestamp to get historical gas prices
+   * @returns {Promise<number>} The gas price in weibars
+   * @throws {Error} If the gas price cannot be estimated
+   */
+  private async getGasPriceInWeibars(requestDetails: RequestDetails, timestamp?: string): Promise<number> {
+    const networkFees = await this.mirrorNodeClient.getNetworkFees(requestDetails, timestamp, undefined);
 
     if (networkFees && Array.isArray(networkFees.fees)) {
-      const txFee = networkFees.fees.find(({ transaction_type }) => transaction_type === EthImpl.ethTxType);
-      if (txFee?.gas) {
-        // convert tinyBars into weiBars
-        const weibars = Hbar.fromTinybars(txFee.gas).toTinybars().multiply(constants.TINYBAR_TO_WEIBAR_COEF);
+      const ethereumTransactionTypeFee = networkFees.fees.find(
+        ({ transaction_type }) => transaction_type === EthImpl.EthereumTransactionType,
+      );
 
-        return weibars.toNumber();
+      if (ethereumTransactionTypeFee?.gas) {
+        // convert tinyBars into weiBars and return the value
+        return ethereumTransactionTypeFee.gas * constants.TINYBAR_TO_WEIBAR_COEF;
       }
     }
 
@@ -819,7 +806,7 @@ export class EthImpl implements Eth {
       );
 
       if (!gasPrice) {
-        gasPrice = Utils.addPercentageBufferToGasPrice(await this.getFeeWeibars(EthImpl.ethGasPrice, requestDetails));
+        gasPrice = Utils.addPercentageBufferToGasPrice(await this.getGasPriceInWeibars(requestDetails));
 
         await this.cacheService.set(
           constants.CACHE_KEY.GAS_PRICE,
@@ -1548,56 +1535,24 @@ export class EthImpl implements Eth {
                 EthImpl.ethGetCode,
                 requestDetails,
               );
-              return result?.entity.runtime_bytecode;
             }
+            return result?.entity.runtime_bytecode;
           }
         }
       }
 
-      const bytecode = await this.hapiService
-        .getSDKClient()
-        .getContractByteCode(0, 0, address, EthImpl.ethGetCode, requestDetails);
-      return prepend0x(Buffer.from(bytecode).toString('hex'));
-    } catch (e: any) {
-      if (e instanceof SDKClientError) {
-        // handle INVALID_CONTRACT_ID or CONTRACT_DELETED
-        if (e.isInvalidContractId() || e.isContractDeleted()) {
-          if (this.logger.isLevelEnabled('debug')) {
-            this.logger.debug(
-              `${requestIdPrefix} Unable to find code for contract ${address} in block "${blockNumber}", returning 0x0, err code: ${e.statusCode}`,
-            );
-          }
-          return EthImpl.emptyHex;
-        }
-
-        this.hapiService.decrementErrorCounter(e.statusCode);
-        this.logger.error(
-          e,
-          `${requestIdPrefix} Error raised during getCode for address ${address}, err code: ${e.statusCode}`,
+      if (this.logger.isLevelEnabled('debug')) {
+        this.logger.debug(
+          `${requestIdPrefix} Address ${address} is not a contract nor an HTS token, returning empty hex`,
         );
-      } else if (e instanceof PrecheckStatusError) {
-        if (
-          e.status._code === constants.PRECHECK_STATUS_ERROR_STATUS_CODES.INVALID_CONTRACT_ID ||
-          e.status._code === constants.PRECHECK_STATUS_ERROR_STATUS_CODES.CONTRACT_DELETED
-        ) {
-          if (this.logger.isLevelEnabled('debug')) {
-            this.logger.debug(
-              `${requestIdPrefix} Unable to find code for contract ${address} in block "${blockNumber}", returning 0x0, err code: ${e.message}`,
-            );
-          }
-          return EthImpl.emptyHex;
-        }
-
-        this.hapiService.decrementErrorCounter(e.status._code);
-        this.logger.error(
-          e,
-          `${requestIdPrefix} Error raised during getCode for address ${address}, err code: ${e.status._code}`,
-        );
-      } else {
-        this.logger.error(e, `${requestIdPrefix} Error raised during getCode for address ${address}`);
       }
 
-      throw e;
+      return EthImpl.emptyHex;
+    } catch (error: any) {
+      this.logger.error(
+        `${requestIdPrefix} Error raised during getCode: address=${address}, blockNumber=${blockNumber}, error=${error.message}`,
+      );
+      throw error;
     }
   }
 
@@ -2191,7 +2146,7 @@ export class EthImpl implements Eth {
     const transactionBuffer = Buffer.from(EthImpl.prune0x(transaction), 'hex');
 
     const networkGasPriceInWeiBars = Utils.addPercentageBufferToGasPrice(
-      await this.getFeeWeibars(EthImpl.ethGasPrice, requestDetails),
+      await this.getGasPriceInWeibars(requestDetails),
     );
     const parsedTx = await this.parseRawTxAndPrecheck(transaction, networkGasPriceInWeiBars, requestDetails);
 
@@ -2284,8 +2239,6 @@ export class EthImpl implements Eth {
       if (shouldForceToConsensus || shouldDefaultToConsensus) {
         result = await this.callConsensusNode(call, gas, requestDetails);
       } else {
-        //temporary workaround until precompiles are implemented in Mirror node evm module
-        // Execute the call and get the response
         result = await this.callMirrorNode(call, gas, call.value, blockNumberOrTag, requestDetails);
       }
 
@@ -2445,21 +2398,6 @@ export class EthImpl implements Eth {
           return predefined.CONTRACT_REVERT(e.detail || e.message, e.data);
         }
 
-        // Temporary workaround until mirror node web3 module implements the support of precompiles
-        // If mirror node throws, rerun eth_call and force it to go through the Consensus network
-        if (e.isNotSupported() || e.isNotSupportedSystemContractOperaton()) {
-          const errorTypeMessage =
-            e.isNotSupported() || e.isNotSupportedSystemContractOperaton() ? 'Unsupported' : 'Unhandled';
-          if (this.logger.isLevelEnabled('trace')) {
-            this.logger.trace(
-              `${requestIdPrefix} ${errorTypeMessage} mirror node eth_call request, retrying with consensus node. details: ${JSON.stringify(
-                callData,
-              )} with error: "${e.message}"`,
-            );
-          }
-          return await this.callConsensusNode(call, gas, requestDetails);
-        }
-
         // for any other Mirror Node upstream server errors (429, 500, 502, 503, 504, etc.), preserve the original error and re-throw to the upper layer
         throw e;
       }
@@ -2562,7 +2500,6 @@ export class EthImpl implements Eth {
    * @param call
    */
   async performCallChecks(call: any): Promise<void> {
-    // after this PR https://github.com/hashgraph/hedera-mirror-node/pull/8100 in mirror-node, call.to is allowed to be empty or null
     if (call.to && !isValidEthereumAddress(call.to)) {
       throw predefined.INVALID_CONTRACT_ADDRESS(call.to);
     }
@@ -2822,12 +2759,7 @@ export class EthImpl implements Eth {
     const block = await this.getBlockByHash(blockHash, false, requestDetails);
     const timestampDecimal = parseInt(block ? block.timestamp : '0', 16);
     const timestampDecimalString = timestampDecimal > 0 ? timestampDecimal.toString() : '';
-    const gasPriceForTimestamp = await this.getFeeWeibars(
-      EthImpl.ethGetTransactionReceipt,
-      requestDetails,
-      timestampDecimalString,
-    );
-
+    const gasPriceForTimestamp = await this.getGasPriceInWeibars(requestDetails, timestampDecimalString);
     return numberTo0x(gasPriceForTimestamp);
   }
 
