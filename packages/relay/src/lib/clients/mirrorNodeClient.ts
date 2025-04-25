@@ -1398,18 +1398,23 @@ export class MirrorNodeClient {
           : Promise.reject(),
       ];
 
-      // only add long zero evm addresses for tokens as they do not refer to actual contract addresses but rather encoded entity nums
-      if (entityIdentifier.startsWith(constants.LONG_ZERO_PREFIX)) {
-        promises.push(
-          searchableTypes.find((t) => t === constants.TYPE_TOKEN)
-            ? buildPromise(
-                this.getTokenById(`0.0.${parseInt(entityIdentifier, 16)}`, requestDetails, retries).catch(() => {
-                  return null;
-                }),
-              )
-            : Promise.reject(),
-        );
-      }
+      const toEntityId = (address: string) => {
+        address = address.slice(2);
+        const shardNum = address.slice(0, 8);
+        const realmNum = address.slice(8, 24);
+        const accountNum = address.slice(24);
+        return `${parseInt(shardNum, 16)}.${parseInt(realmNum, 16)}.${parseInt(accountNum, 16)}`;
+      };
+
+      promises.push(
+        searchableTypes.find((t) => t === constants.TYPE_TOKEN)
+          ? buildPromise(
+              this.getTokenById(toEntityId(entityIdentifier), requestDetails, retries).catch(() => {
+                return null;
+              }),
+            )
+          : Promise.reject(),
+      );
 
       // maps the promises with indices of the promises array
       // because there is no such method as Promise.anyWithIndex in js
