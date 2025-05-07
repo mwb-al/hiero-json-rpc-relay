@@ -2881,6 +2881,7 @@ export class EthImpl implements Eth {
       );
     }
 
+    transactionsArray = _.uniqWith(transactionsArray, _.isEqual);
     return transactionsArray;
   }
 
@@ -2948,8 +2949,6 @@ export class EthImpl implements Eth {
     }
 
     transactionArray = this.populateSyntheticTransactions(showDetails, logs, transactionArray, requestDetails);
-    transactionArray = showDetails ? transactionArray : _.uniq(transactionArray);
-
     const formattedReceipts: IReceiptRootHash[] = ReceiptsRootUtils.buildReceiptRootHashes(
       transactionArray.map((tx) => (showDetails ? tx.hash : tx)),
       contractResults,
