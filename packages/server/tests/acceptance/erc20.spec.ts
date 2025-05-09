@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // External resources
-import { EthImpl } from '@hashgraph/json-rpc-relay/dist/lib/eth';
+import { CommonService } from '@hashgraph/json-rpc-relay/src/lib/services';
 import chai, { expect } from 'chai';
 import { solidity } from 'ethereum-waffle';
 import { ethers } from 'ethers';
@@ -32,9 +32,9 @@ describe('@erc20 Acceptance Tests', async function () {
   // cached entities
   const accounts: AliasAccount[] = [];
   let initialHolder;
-  let recipient;
   let anotherAccount;
   let requestId;
+  let recipient;
 
   const contracts: [any] = [];
 
@@ -111,7 +111,7 @@ describe('@erc20 Acceptance Tests', async function () {
       it('Relay can execute "eth_getCode" for ERC20 contract with evmAddress', async function () {
         const res = await relay.call('eth_getCode', [contract.target, 'latest'], requestId);
         expect(res).to.be.equal(
-          testTitles[i].expectedBytecode ?? EthImpl.redirectBytecodeAddressReplace(contract.target),
+          testTitles[i].expectedBytecode ?? CommonService.redirectBytecodeAddressReplace(contract.target),
         );
       });
 
