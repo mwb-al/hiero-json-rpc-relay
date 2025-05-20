@@ -57,7 +57,6 @@ describe('Precheck', async function () {
   const txWithZeroValue =
     '0xf86380843b9aca00825208940000000000000000000000000000000000000000808025a04e557f2008ff383df9a21919860939f60f4c27b9c845b89021ae2a79be4f6790a002f86d6dcefd2ffec72bf4d427091e7375acb6707e49d99893173cbc03515fd6';
   const parsedTxWithZeroValue = ethers.Transaction.from(txWithZeroValue);
-
   const defaultGasPrice = 720_000_000_000;
   const defaultGasLimit = 1_000_000;
   const defaultChainId = Number('0x12a');
@@ -941,6 +940,20 @@ describe('Precheck', async function () {
       mock.onGet(`accounts/${parsedTx.to}${transactionsPostFix}`).reply(200, JSON.stringify(mirrorAccountTo));
 
       expect(async () => await precheck.receiverAccount(parsedTx, requestDetails)).not.to.throw;
+    });
+  });
+
+  describe('parseRawTransaction', async function () {
+    it('should successfully parse a valid transaction string', function () {
+      const parsedTx = Precheck.parseRawTransaction(parsedTxWithMatchingChainId);
+      expect(parsedTx).to.be.instanceOf(Transaction);
+      expect(parsedTx.chainId).to.equal(BigInt(298));
+    });
+
+    it('should throw INVALID_ARGUMENTS for invalid RLP', function () {
+      expect(() => Precheck.parseRawTransaction(constants.INVALID_TRANSACTION)).to.throw(
+        'Invalid arguments: unexpected junk after rlp payload',
+      );
     });
   });
 });
