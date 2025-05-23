@@ -72,7 +72,7 @@ describe('@api-batch-2 RPC Server Acceptance Tests', function () {
   const FEE_SCHEDULE_FILE_CONTENT_UPDATED =
     '0a280a0a08541a061a0440a8953a0a0a08061a061a0440889d2d0a0a08071a061a0440b0b63c120208011200'; // Eth gas = 953000
 
-  let blockNumberAtStartOfTests = 0;
+  let blockNumAfterCreateChildTx = 0;
 
   const signSendAndConfirmTransaction = async (transaction, accounts, requestId) => {
     const signedTx = await accounts.wallet.signTransaction(transaction);
@@ -118,17 +118,28 @@ describe('@api-batch-2 RPC Server Acceptance Tests', function () {
     });
     await relay.pollForValidTransactionReceipt(initialFundsTx.hash);
 
-    const [childTx, blockNumber, balance] = await Promise.all([
-      parentContract.createChild(1),
-      accounts[0].wallet.provider?.getBlockNumber(),
-      accounts[0].wallet.provider?.getBalance(accounts[0].address),
-    ]);
+    createChildTx = await parentContract.createChild(1);
+    const createChildTxReceipt = await relay.pollForValidTransactionReceipt(createChildTx.hash);
 
-    createChildTx = childTx;
-    await relay.pollForValidTransactionReceipt(createChildTx.hash);
+    const blockNumBeforeCreateChildTx = parseInt(createChildTxReceipt.blockNumber, 16);
+    blockNumAfterCreateChildTx = await relay.call(RelayCalls.ETH_ENDPOINTS.ETH_BLOCK_NUMBER, [], requestId);
 
-    blockNumberAtStartOfTests = blockNumber as number;
-    accounts0StartBalance = balance as bigint;
+    // Note: There is currently a caching solution for eth_blockNumber that stores the block number.
+    // This loop is designed to poll for the latest block number until it is correctly updated.
+    for (let i = 0; i < 5; i++) {
+      blockNumAfterCreateChildTx = await relay.call(RelayCalls.ETH_ENDPOINTS.ETH_BLOCK_NUMBER, [], requestId);    
+      if (blockNumAfterCreateChildTx > blockNumBeforeCreateChildTx) {
+        console.log("Block number updated succesfully")
+        break;
+      }
+      await Utils.wait(1500);
+    }
+
+    accounts0StartBalance = await relay.call(
+      RelayCalls.ETH_ENDPOINTS.ETH_GET_BALANCE,
+      [accounts[0].address, 'latest'],
+      requestId,
+    );
 
     htsAddress = Utils.idToEvmAddress(tokenId.toString());
     await Promise.all([
@@ -544,11 +555,10 @@ describe('@api-batch-2 RPC Server Acceptance Tests', function () {
     it('@release should execute "eth_getBalance" with block number in the last 15 minutes for account that has performed contract deploys/calls', async function () {
       const res = await relay.call(
         RelayCalls.ETH_ENDPOINTS.ETH_GET_BALANCE,
-        [accounts[0].address, numberTo0x(blockNumberAtStartOfTests)],
+        [accounts[0].address, blockNumAfterCreateChildTx],
         requestId,
       );
-      const balanceAtBlock = BigInt(accounts0StartBalance);
-      expect(res).to.eq(`0x${balanceAtBlock.toString(16)}`);
+      expect(res).to.eq(accounts0StartBalance);
     });
 
     it('@release should correctly execute "eth_getBalance" with block number in the last 15 minutes with several txs around that time', async function () {
