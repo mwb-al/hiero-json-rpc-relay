@@ -1465,6 +1465,10 @@
         },
         "required": ["from", "gas", "input"]
       },
+      "notFound": {
+        "title": "Not Found (null)",
+        "type": "null"
+      },
       "Block": {
         "title": "Block object",
         "type": "object",
