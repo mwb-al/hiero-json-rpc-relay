@@ -1971,16 +1971,7 @@
           "to": {
             "title": "to",
             "description": "Address of the receiver or null in a contract creation transaction.",
-            "oneOf": [
-              {
-                "title": "Contract Creation (null)",
-                "type": "null"
-              },
-              {
-                "title": "Recipient Address",
-                "$ref": "#/components/schemas/address"
-              }
-            ]
+            "$ref": "#/components/schemas/address"
           },
           "cumulativeGasUsed": {
             "title": "cumulative gas used",
