@@ -1,16 +1,16 @@
+import { shouldSkipKey, shouldSkipMethod, shouldSkipPath } from '../config.js';
 import { getMethodMap, getDifferingKeys } from '../utils/openrpc.utils.js';
-import {shouldSkipPath, shouldSkipKey, shouldSkipMethod} from '../config.js';
 import {
-  setNestedValue,
+  filterSkippedMethods,
+  findRefPaths,
   getNestedValue,
+  getObjectByPath,
+  handleRefField,
+  handleRefFieldsWithOriginal,
   hasNestedPath,
   removeSkippedKeys,
-  handleRefField,
-  getObjectByPath,
+  setNestedValue,
   setObjectByPath,
-  findRefPaths,
-  handleRefFieldsWithOriginal,
-  filterSkippedMethods
 } from '../utils/merge.utils.js';
 
 class MergeDocuments {
@@ -86,22 +86,79 @@ class MergeDocuments {
     const refPaths = findRefPaths(origMethod);
 
     for (const { path } of refPaths) {
-      const targetObj = path ? getObjectByPath(modMethod, path) : modMethod;
-      const origObj = path ? getObjectByPath(origMethod, path) : origMethod;
-
-      if (targetObj && typeof targetObj === 'object' && origObj && typeof origObj === 'object') {
-        if (path) {
-          setObjectByPath(modMethod, path, JSON.parse(JSON.stringify(origObj)));
-        } else {
-          for (const key in modMethod) {
-            delete modMethod[key];
-          }
-          for (const key in origObj) {
-            modMethod[key] = origObj[key];
-          }
-        }
-      }
+      this.replaceObjectAtPath(origMethod, modMethod, path);
     }
+  }
+
+  /**
+   * Replaces an object at a specific path with the original object
+   * @param {Object} origMethod - The original method
+   * @param {Object} modMethod - The modified method
+   * @param {string} path - The path to the object to replace
+   * @private
+   */
+  replaceObjectAtPath(origMethod, modMethod, path) {
+    const targetObj = this.getObjectAtPath(modMethod, path);
+    const origObj = this.getObjectAtPath(origMethod, path);
+
+    if (!this.areValidObjects(targetObj, origObj)) {
+      return;
+    }
+
+    if (path) {
+      setObjectByPath(modMethod, path, this.deepClone(origObj));
+    } else {
+      this.replaceRootObject(modMethod, origObj);
+    }
+  }
+
+  /**
+   * Gets an object at the specified path or returns the root object if no path
+   * @param {Object} obj - The object to navigate
+   * @param {string} path - The path to navigate to
+   * @returns {*} The object at the path or the root object
+   * @private
+   */
+  getObjectAtPath(obj, path) {
+    return path ? getObjectByPath(obj, path) : obj;
+  }
+
+  /**
+   * Validates that both objects are valid objects
+   * @param {*} targetObj - The target object
+   * @param {*} origObj - The original object
+   * @returns {boolean} True if both are valid objects
+   * @private
+   */
+  areValidObjects(targetObj, origObj) {
+    return targetObj &&
+      typeof targetObj === 'object' &&
+      origObj &&
+      typeof origObj === 'object';
+  }
+
+  /**
+   * Creates a deep clone of an object
+   * @param {*} obj - The object to clone
+   * @returns {*} A deep clone of the object
+   * @private
+   */
+  deepClone(obj) {
+    return JSON.parse(JSON.stringify(obj));
+  }
+
+  /**
+   * Replaces the root object by clearing the target and copying from source
+   * @param {Object} targetObj - The object to clear and replace
+   * @param {Object} sourceObj - The source object to copy from
+   * @private
+   */
+  replaceRootObject(targetObj, sourceObj) {
+    Object.keys(targetObj).forEach(key => {
+      delete targetObj[key];
+    });
+
+    Object.assign(targetObj, sourceObj);
   }
 
   /**
@@ -164,27 +221,94 @@ class MergeDocuments {
    * @param {Object} filteredModified - The filtered modified document
    */
   mergeComponents(filteredOriginal, filteredModified) {
-    if (!filteredOriginal.components || typeof filteredOriginal.components !== 'object') {
+    if (!this.hasValidComponents(filteredOriginal)) {
       return;
     }
 
-    if (!filteredModified.components) {
-      filteredModified.components = {};
+    this.ensureComponentsExist(filteredModified);
+
+    const originalComponents = filteredOriginal.components;
+    const modifiedComponents = filteredModified.components;
+
+    Object.keys(originalComponents).forEach(sectionName => {
+      this.mergeSectionComponents(originalComponents[sectionName], modifiedComponents, sectionName);
+    });
+  }
+
+  /**
+   * Validates if the document has valid components
+   * @param {Object} document - The document to validate
+   * @returns {boolean} True if document has valid components
+   * @private
+   */
+  hasValidComponents(document) {
+    return document?.components && typeof document.components === 'object';
+  }
+
+  /**
+   * Ensures the components object exists in the target document
+   * @param {Object} document - The document to ensure components exist in
+   * @private
+   */
+  ensureComponentsExist(document) {
+    if (!document.components) {
+      document.components = {};
+    }
+  }
+
+  /**
+   * Merges components from a specific section
+   * @param {Object} originalSection - The original section components
+   * @param {Object} modifiedComponents - The modified document's components object
+   * @param {string} sectionName - The name of the section being merged
+   * @private
+   */
+  mergeSectionComponents(originalSection, modifiedComponents, sectionName) {
+    if (!originalSection || typeof originalSection !== 'object') {
+      return;
     }
 
-    for (const section in filteredOriginal.components) {
-      if (!filteredModified.components[section]) {
-        filteredModified.components[section] = {};
-      }
+    this.ensureSectionExists(modifiedComponents, sectionName);
 
-      for (const key in filteredOriginal.components[section]) {
-        if (shouldSkipKey(key)) continue;
+    const validKeys = this.getValidKeysFromSection(originalSection);
 
-        if (!filteredModified.components[section][key]) {
-          filteredModified.components[section][key] =
-              removeSkippedKeys(filteredOriginal.components[section][key]);
-        }
-      }
+    validKeys.forEach(key => {
+      this.mergeComponentKey(originalSection[key], modifiedComponents[sectionName], key);
+    });
+  }
+
+  /**
+   * Ensures a specific section exists in the components object
+   * @param {Object} components - The components object
+   * @param {string} sectionName - The section name to ensure exists
+   * @private
+   */
+  ensureSectionExists(components, sectionName) {
+    if (!components[sectionName]) {
+      components[sectionName] = {};
+    }
+  }
+
+  /**
+   * Gets valid keys from a section (excludes skipped keys)
+   * @param {Object} section - The section to get keys from
+   * @returns {string[]} Array of valid key names
+   * @private
+   */
+  getValidKeysFromSection(section) {
+    return Object.keys(section).filter(key => !shouldSkipKey(key));
+  }
+
+  /**
+   * Merges a specific component key if it doesn't already exist
+   * @param {*} originalValue - The original component value
+   * @param {Object} targetSection - The target section to merge into
+   * @param {string} key - The component key name
+   * @private
+   */
+  mergeComponentKey(originalValue, targetSection, key) {
+    if (!targetSection[key]) {
+      targetSection[key] = removeSkippedKeys(originalValue);
     }
   }
 
@@ -194,40 +318,134 @@ class MergeDocuments {
    * @param {Object} originalDocument - The original document
    * @returns {Object} - The processed document
    */
+  /**
+   * Processes a document to handle $ref fields and remove skipped keys
+   * @param {Object} document - The document to process
+   * @param {Object} originalDocument - The original document
+   * @returns {Object} - The processed document
+   */
   processDocument(document, originalDocument) {
-    if (!document || !document.methods || !Array.isArray(document.methods)) {
+    if (!this.isValidDocument(document)) {
       return document;
     }
 
-    const result = JSON.parse(JSON.stringify(document));
+    const result = this.cloneDocument(document);
 
-    // Filter methods that should be skipped
-    result.methods = result.methods.filter(method => {
+    this.filterAndCleanMethods(result);
+
+    if (originalDocument) {
+      return this.processWithOriginalDocument(result, originalDocument);
+    }
+
+    return handleRefField(result);
+  }
+
+  /**
+   * Validates if the document has the required structure
+   * @param {Object} document - The document to validate
+   * @returns {boolean} True if document is valid
+   * @private
+   */
+  isValidDocument(document) {
+    return document &&
+      document.methods &&
+      Array.isArray(document.methods);
+  }
+
+  /**
+   * Creates a deep clone of the document
+   * @param {Object} document - The document to clone
+   * @returns {Object} A deep clone of the document
+   * @private
+   */
+  cloneDocument(document) {
+    return JSON.parse(JSON.stringify(document));
+  }
+
+  /**
+   * Filters out skipped methods and removes skipped keys from remaining methods
+   * @param {Object} document - The document to process
+   * @private
+   */
+  filterAndCleanMethods(document) {
+    document.methods = this.filterValidMethods(document.methods);
+    document.methods = this.removeSkippedKeysFromMethods(document.methods);
+  }
+
+  /**
+   * Filters methods that should not be skipped
+   * @param {Array} methods - Array of methods to filter
+   * @returns {Array} Filtered array of methods
+   * @private
+   */
+  filterValidMethods(methods) {
+    return methods.filter(method => {
       const methodName = method?.name;
       if (!methodName) return true;
       return !shouldSkipMethod(methodName);
     });
+  }
 
-    // Remove skipped keys
-    result.methods = result.methods.map(method => removeSkippedKeys(method));
+  /**
+   * Removes skipped keys from all methods
+   * @param {Array} methods - Array of methods to clean
+   * @returns {Array} Array of methods with skipped keys removed
+   * @private
+   */
+  removeSkippedKeysFromMethods(methods) {
+    return methods.map(method => removeSkippedKeys(method));
+  }
 
-    if (originalDocument) {
-      if (result.methods && originalDocument.methods) {
-        const origMethodMap = getMethodMap(originalDocument);
-        result.methods = result.methods.map(method => {
-          const origMethod = origMethodMap.get(method.name);
-          return origMethod ? handleRefFieldsWithOriginal(method, origMethod) : method;
-        });
-      }
+  /**
+   * Processes the document when an original document is available
+   * @param {Object} document - The document to process
+   * @param {Object} originalDocument - The original document for reference
+   * @returns {Object} The processed document
+   * @private
+   */
+  processWithOriginalDocument(document, originalDocument) {
+    this.processMethodsWithOriginal(document, originalDocument);
+    this.processComponentsWithOriginal(document, originalDocument);
+    return document;
+  }
 
-      if (result.components && originalDocument.components) {
-        result.components = handleRefFieldsWithOriginal(result.components, originalDocument.components, true);
-      }
-
-      return result;
+  /**
+   * Processes methods with reference to the original document
+   * @param {Object} document - The document to process
+   * @param {Object} originalDocument - The original document for reference
+   * @private
+   */
+  processMethodsWithOriginal(document, originalDocument) {
+    if (!document.methods || !originalDocument.methods) {
+      return;
     }
 
-    return handleRefField(result);
+    const origMethodMap = getMethodMap(originalDocument);
+
+    document.methods = document.methods.map(method => {
+      const origMethod = origMethodMap.get(method.name);
+      return origMethod
+        ? handleRefFieldsWithOriginal(method, origMethod)
+        : method;
+    });
+  }
+
+  /**
+   * Processes components with reference to the original document
+   * @param {Object} document - The document to process
+   * @param {Object} originalDocument - The original document for reference
+   * @private
+   */
+  processComponentsWithOriginal(document, originalDocument) {
+    if (!document.components || !originalDocument.components) {
+      return;
+    }
+
+    document.components = handleRefFieldsWithOriginal(
+      document.components,
+      originalDocument.components,
+      true
+    );
   }
 }
 

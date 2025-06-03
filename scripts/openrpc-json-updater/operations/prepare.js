@@ -3,7 +3,7 @@ import diff from 'deep-diff';
 export function prepareDocuments(originalJson, modifiedJson) {
   return {
     normalizedOriginal: normalizeDocument(originalJson),
-    normalizedModified: normalizeDocument(modifiedJson)
+    normalizedModified: normalizeDocument(modifiedJson),
   };
 }
 

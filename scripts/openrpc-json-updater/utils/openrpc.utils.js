@@ -1,5 +1,5 @@
-import { compareIgnoringFormatting } from '../operations/prepare.js';
 import { shouldSkipPath, shouldSkipKey } from '../config.js';
+import { compareIgnoringFormatting } from '../operations/prepare.js';
 
 export function getMethodMap(openrpcDoc) {
   const map = new Map();
@@ -106,54 +106,84 @@ export function getDifferingKeysByCategory(origMethod, modMethod) {
     valueDiscrepancies: [],
     customFields: []
   };
-  
+
   const differences = compareIgnoringFormatting(origMethod, modMethod) || [];
-  
-  for (const d of differences) {
-    if (d.path) {
-      const fullPath = d.path.join('.');
-      
-      if (!fullPath || fullPath.startsWith('name')) continue;
-      
-      if (shouldSkipPath(fullPath)) continue;
-      
-      if (hasKey(origMethod, fullPath) && hasKey(modMethod, fullPath)) {
-        result.valueDiscrepancies.push(fullPath);
-      }
-      else if (!hasKey(origMethod, fullPath) && hasKey(modMethod, fullPath)) {
-        result.customFields.push(fullPath);
-      }
-    }
-  }
-  
-  function findMissingKeys(prefix, orig, mod) {
-    for (const key in orig) {
-      if (shouldSkipKey(key)) continue;
-      
-      const newPrefix = prefix ? `${prefix}.${key}` : key;
-      
-      if (newPrefix === 'name') continue;
-      
-      if (shouldSkipPath(newPrefix)) continue;
-      
-      if (!(key in mod)) {
-        result.valueDiscrepancies.push(newPrefix);
-      } else if (
-        typeof orig[key] === 'object' &&
-        orig[key] !== null &&
-        typeof mod[key] === 'object' &&
-        mod[key] !== null &&
-        !Array.isArray(orig[key]) &&
-        !Array.isArray(mod[key])
-      ) {
-        findMissingKeys(newPrefix, orig[key], mod[key]);
-      }
-    }
-  }
-  
-  findMissingKeys('', origMethod, modMethod);
-  
+
+  // Process differences from comparison
+  processDifferences(differences, origMethod, modMethod, result);
+
+  // Find missing keys in original method
+  findMissingKeys('', origMethod, modMethod, result);
+
   return result;
+}
+
+function processDifferences(differences, origMethod, modMethod, result) {
+  for (const difference of differences) {
+    if (!difference.path) continue;
+
+    const fullPath = difference.path.join('.');
+
+    if (shouldSkipDifferencePath(fullPath)) continue;
+
+    categorizeDifference(fullPath, origMethod, modMethod, result);
+  }
+}
+
+function shouldSkipDifferencePath(fullPath) {
+  return !fullPath ||
+    fullPath.startsWith('name') ||
+    shouldSkipPath(fullPath);
+}
+
+function categorizeDifference(fullPath, origMethod, modMethod, result) {
+  const existsInOrig = hasKey(origMethod, fullPath);
+  const existsInMod = hasKey(modMethod, fullPath);
+
+  if (existsInOrig && existsInMod) {
+    result.valueDiscrepancies.push(fullPath);
+  } else if (!existsInOrig && existsInMod) {
+    result.customFields.push(fullPath);
+  }
+}
+
+function findMissingKeys(prefix, orig, mod, result) {
+  for (const key in orig) {
+    if (shouldSkipKey(key)) continue;
+
+    const newPrefix = buildPath(prefix, key);
+
+    if (shouldSkipMissingKeyPath(newPrefix)) continue;
+
+    if (isKeyMissing(key, mod)) {
+      result.valueDiscrepancies.push(newPrefix);
+    } else if (shouldRecurseIntoObjects(orig[key], mod[key])) {
+      findMissingKeys(newPrefix, orig[key], mod[key], result);
+    }
+  }
+}
+
+function buildPath(prefix, key) {
+  return prefix ? `${prefix}.${key}` : key;
+}
+
+function shouldSkipMissingKeyPath(path) {
+  return path === 'name' || shouldSkipPath(path);
+}
+
+function isKeyMissing(key, obj) {
+  return !(key in obj);
+}
+
+function shouldRecurseIntoObjects(origValue, modValue) {
+  return isNonArrayObject(origValue) &&
+    isNonArrayObject(modValue);
+}
+
+function isNonArrayObject(value) {
+  return typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value);
 }
 
 export function getDifferingKeys(origMethod, modMethod) {
