@@ -42,7 +42,7 @@ jobs:
     needs: clone-and-build-execution-apis
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
         with:
           ref: 'main'
           token: ${{ secrets.PAT_TOKEN }}
@@ -59,7 +59,7 @@ jobs:
           cp ./downloaded-artifacts/refs-openrpc.json scripts/openrpc-json-updater/original-openrpc.json
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
           node-version: '22'
           cache: 'npm'
@@ -92,10 +92,8 @@ jobs:
               echo "No differences found. Skipping PR creation."
               echo "SKIP_PR=true" >> $GITHUB_ENV
               exit 0
-            elif [[ "$MERGE_OUTPUT" =~ Merge\ completed\.\ Updated\ file:\ \'([^\']+)\'\. ]]; then
-              echo "Successfully updated modified-openrpc.json"
-              echo "MERGE_FILE=modified-openrpc.json" >> $GITHUB_ENV
-              echo "MERGE_FILENAME=modified-openrpc.json" >> $GITHUB_ENV
+            elif [[ "$MERGE_OUTPUT" == *"Merge completed"* ]]; then
+              echo "Successfully updated openrpc.json"
               echo "SKIP_PR=false" >> $GITHUB_ENV
             else
               echo "Unexpected output. Output was: $MERGE_OUTPUT"
@@ -110,7 +108,7 @@ jobs:
         id: branch-name
         run: |
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          UNIQUE_BRANCH="${{ github.event.inputs.branch_name }}-${TIMESTAMP}"
+          UNIQUE_BRANCH="update-openrpc-${TIMESTAMP}"
           echo "UNIQUE_BRANCH=${UNIQUE_BRANCH}" >> $GITHUB_ENV
           echo "Generated unique branch name: ${UNIQUE_BRANCH}"
 
@@ -133,5 +131,5 @@ jobs:
           branch: ${{ env.UNIQUE_BRANCH }}
           base: 'main'
           add-paths: |
-            scripts/openrpc-json-updater/modified-openrpc.json
+            docs/openrpc.json
           delete-branch: false

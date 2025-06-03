@@ -4,7 +4,7 @@ import { generateReport } from './operations/report.js';
 import { prepareDocuments, compareIgnoringFormatting } from './operations/prepare.js';
 
 const originalFilePath = './original-openrpc.json';
-const modifiedFilePath = './modified-openrpc.json';
+const modifiedFilePath = '../../docs/openrpc.json';
 
 const { data: originalJson } = readJson(originalFilePath);
 const { data: modifiedJson, originalContent: modifiedContent } = readJson(modifiedFilePath);
