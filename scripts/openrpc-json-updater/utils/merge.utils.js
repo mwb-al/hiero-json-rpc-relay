@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import { shouldSkipKey, shouldSkipMethod } from '../config.js';
 
 /**
@@ -221,7 +223,7 @@ class RefPathFinder {
   addRefPath(path, ref, paths) {
     paths.push({
       path,
-      ref
+      ref,
     });
   }
 

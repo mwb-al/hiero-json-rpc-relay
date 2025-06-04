@@ -1,5 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import { shouldSkipKey, shouldSkipMethod, shouldSkipPath } from '../config.js';
-import { getMethodMap, getDifferingKeys } from '../utils/openrpc.utils.js';
 import {
   filterSkippedMethods,
   findRefPaths,
@@ -12,6 +13,7 @@ import {
   setNestedValue,
   setObjectByPath,
 } from '../utils/merge.utils.js';
+import { getDifferingKeys, getMethodMap } from '../utils/openrpc.utils.js';
 
 class MergeDocuments {
   /**
@@ -66,12 +68,10 @@ class MergeDocuments {
         filteredModified.methods.push(origMethod);
         continue;
       }
-
       const modMethod = modifiedMap.get(name);
-      
+
       // Process $ref fields
       this.processRefFields(origMethod, modMethod);
-      
       // Process differing keys
       this.processDifferingKeys(origMethod, modMethod);
     }
@@ -444,7 +444,7 @@ class MergeDocuments {
     document.components = handleRefFieldsWithOriginal(
       document.components,
       originalDocument.components,
-      true
+      true,
     );
   }
 }

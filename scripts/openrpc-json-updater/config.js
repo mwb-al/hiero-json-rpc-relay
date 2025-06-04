@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 export const SKIPPED_KEYS = [
   "examples",
   "baseFeePerBlobGas",
@@ -87,24 +89,20 @@ export function shouldSkipKey(key) {
   if (!key) return false;
   for (const pattern of SKIPPED_KEYS) {
     if (pattern === key) return true;
-
     if (pattern.endsWith('*')) {
       const prefix = pattern.slice(0, -1);
       if (key.startsWith(prefix)) return true;
     }
   }
-  
   return false;
 }
 
 export function shouldSkipPath(path) {
   if (!path) return false;
-
   const parts = path.split('.');
   for (const part of parts) {
     if (shouldSkipKey(part)) return true;
   }
-  
   return false;
 }
 

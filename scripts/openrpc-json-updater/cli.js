@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import { mergeDocuments } from './operations/merge.js';
 import { compareIgnoringFormatting, prepareDocuments } from './operations/prepare.js';
 import { generateReport } from './operations/report.js';

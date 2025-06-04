@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import { getSkippedMethodCategory } from '../config.js';
 import { getDifferingKeysByCategory, getMethodMap, groupPaths } from '../utils/openrpc.utils.js';
 

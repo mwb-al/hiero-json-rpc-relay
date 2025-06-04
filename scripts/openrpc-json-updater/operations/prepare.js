@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import diff from 'deep-diff';
 
 export function prepareDocuments(originalJson, modifiedJson) {
