@@ -1,5 +1,5 @@
-import { shouldSkipPath, shouldSkipKey } from '../config.js';
 import { compareIgnoringFormatting } from '../operations/prepare.js';
+import { shouldSkipKey, shouldSkipPath } from '../config.js';
 
 export function getMethodMap(openrpcDoc) {
   const map = new Map();
@@ -13,7 +13,6 @@ export function getMethodMap(openrpcDoc) {
 
 function hasKey(obj, path) {
   if (!path) return false;
-  
   const parts = path.split('.');
   let current = obj;
   
@@ -104,7 +103,7 @@ export function groupPaths(paths, minGroupSize = 3) {
 export function getDifferingKeysByCategory(origMethod, modMethod) {
   const result = {
     valueDiscrepancies: [],
-    customFields: []
+    customFields: [],
   };
 
   const differences = compareIgnoringFormatting(origMethod, modMethod) || [];

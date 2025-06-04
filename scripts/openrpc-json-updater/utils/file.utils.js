@@ -5,7 +5,7 @@ export function readJson(filePath) {
     const content = fs.readFileSync(filePath, 'utf-8');
     return {
       data: JSON.parse(content),
-      originalContent: content
+      originalContent: content,
     };
   } catch (err) {
     console.error(`Unable to read or parse "${filePath}":`, err);
@@ -205,7 +205,6 @@ export function writeJson(filePath, data, originalContent) {
 
     const eol = originalContent.includes('\r\n') ? '\r\n' : '\n';
     const formatted = formatJson(data);
-    
     const output = formatted.replace(/\n/g, eol);
     
     fs.writeFileSync(filePath, output, 'utf-8');

@@ -1,5 +1,5 @@
-import { getMethodMap, getDifferingKeysByCategory, groupPaths } from '../utils/openrpc.utils.js';
 import { getSkippedMethodCategory } from '../config.js';
+import { getDifferingKeysByCategory, getMethodMap, groupPaths } from '../utils/openrpc.utils.js';
 
 export async function generateReport(
   originalJson,
@@ -25,7 +25,6 @@ export async function generateReport(
     const modMethod = modifiedMethods.get(name);
 
     const { valueDiscrepancies, customFields } = getDifferingKeysByCategory(origMethod, modMethod);
-    
     if (valueDiscrepancies.length > 0 || customFields.length > 0) {
       changedMethods.push({
         method: name,

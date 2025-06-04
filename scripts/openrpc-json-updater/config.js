@@ -61,7 +61,7 @@ export const NOT_IMPLEMENTED_METHODS = [
 
 export const SKIPPED_METHODS = [
   ...DISCARDED_METHODS,
-  ...NOT_IMPLEMENTED_METHODS
+  ...NOT_IMPLEMENTED_METHODS,
 ];
 
 export function shouldSkipMethod(methodName, path) {
@@ -80,7 +80,6 @@ export function shouldSkipMethod(methodName, path) {
       if (methodName.startsWith(prefix)) return true;
     }
   }
-  
   return false;
 }
 

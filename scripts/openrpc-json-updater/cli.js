@@ -1,6 +1,6 @@
+import { mergeDocuments } from './operations/merge.js';
 import { compareIgnoringFormatting, prepareDocuments } from './operations/prepare.js';
 import { generateReport } from './operations/report.js';
-import { mergeDocuments } from './operations/merge.js';
 import { readJson, writeJson } from './utils/file.utils.js';
 
 const originalFilePath = './original-openrpc.json';
