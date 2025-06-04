@@ -1,5 +1,5 @@
-import { compareIgnoringFormatting } from '../operations/prepare.js';
 import { shouldSkipKey, shouldSkipPath } from '../config.js';
+import { compareIgnoringFormatting } from '../operations/prepare.js';
 
 export function getMethodMap(openrpcDoc) {
   const map = new Map();
@@ -15,21 +15,20 @@ function hasKey(obj, path) {
   if (!path) return false;
   const parts = path.split('.');
   let current = obj;
-  
   for (let i = 0; i < parts.length; i++) {
     const part = parts[i];
-    
+
     if (current === undefined || current === null || typeof current !== 'object') {
       return false;
     }
-    
+
     if (!(part in current)) {
       return false;
     }
-    
+
     current = current[part];
   }
-  
+
   return true;
 }
 
@@ -40,26 +39,26 @@ export function groupPaths(paths, minGroupSize = 3) {
   function getDepth(path) {
     return path.split('.').length;
   }
-  
+
   function analyzePrefixes(paths) {
     const prefixCounters = {};
-    
+
     for (const path of paths) {
       const parts = path.split('.');
       let currentPrefix = '';
-      
+
       for (let i = 0; i < parts.length - 1; i++) {
         currentPrefix = currentPrefix ? `${currentPrefix}.${parts[i]}` : parts[i];
         prefixCounters[currentPrefix] = (prefixCounters[currentPrefix] || 0) + 1;
       }
     }
-    
+
     return Object.keys(prefixCounters)
       .filter(prefix => prefixCounters[prefix] >= minGroupSize)
       .sort((a, b) => {
         const countDiff = prefixCounters[b] - prefixCounters[a];
         if (countDiff !== 0) return countDiff;
-        
+
         const depthA = getDepth(a);
         const depthB = getDepth(b);
         return depthB - depthA;
@@ -69,16 +68,16 @@ export function groupPaths(paths, minGroupSize = 3) {
   function getSubpaths(paths, prefix) {
     return paths.filter(path => path.startsWith(prefix + '.') || path === prefix);
   }
-  
+
   function groupPathsHierarchically(paths) {
     const remainingPaths = [...paths];
     const result = [];
-    
+
     const commonPrefixes = analyzePrefixes(paths);
-    
+
     for (const prefix of commonPrefixes) {
       const matchingPaths = getSubpaths(remainingPaths, prefix);
-      
+
       if (matchingPaths.length >= minGroupSize) {
         for (const path of matchingPaths) {
           const index = remainingPaths.indexOf(path);
@@ -86,16 +85,16 @@ export function groupPaths(paths, minGroupSize = 3) {
             remainingPaths.splice(index, 1);
           }
         }
-        
+
         result.push(`${prefix} (${matchingPaths.length} diffs)`);
       }
     }
-    
+
     result.push(...remainingPaths);
-    
+
     return result;
   }
-  
+
   const groupedPaths = groupPathsHierarchically(paths);
   return groupedPaths.join(', ');
 }

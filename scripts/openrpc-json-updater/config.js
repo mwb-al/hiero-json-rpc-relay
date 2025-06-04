@@ -85,7 +85,6 @@ export function shouldSkipMethod(methodName, path) {
 
 export function shouldSkipKey(key) {
   if (!key) return false;
-  
   for (const pattern of SKIPPED_KEYS) {
     if (pattern === key) return true;
 

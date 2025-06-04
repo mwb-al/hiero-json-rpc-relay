@@ -206,7 +206,6 @@ export function writeJson(filePath, data, originalContent) {
     const eol = originalContent.includes('\r\n') ? '\r\n' : '\n';
     const formatted = formatJson(data);
     const output = formatted.replace(/\n/g, eol);
-    
     fs.writeFileSync(filePath, output, 'utf-8');
     return true;
   } catch (err) {
