@@ -44,6 +44,7 @@ describe('BlockService', () => {
     status: '0x1',
     function_parameters: '0x608060405234801561001057600080fd5b50',
     call_result: '0x',
+    created_contract_ids: [],
     ...overrides,
   });
 
@@ -84,6 +85,7 @@ describe('BlockService', () => {
       getLogsWithParams: sinon.stub(),
       resolveEvmAddress: sinon.stub(),
       getGasPriceInWeibars: sinon.stub(),
+      genericErrorHandler: sinon.stub(),
     } as unknown as CommonService;
 
     cacheService = {
@@ -192,6 +194,64 @@ describe('BlockService', () => {
       expect((commonService.resolveEvmAddress as sinon.SinonStub).calledWith('0xoriginalFromAddress', requestDetails))
         .to.be.true;
       expect((commonService.resolveEvmAddress as sinon.SinonStub).calledWith(null, requestDetails)).to.be.true;
+    });
+
+    it('should set to field to null when contract is in created_contract_ids', async () => {
+      // Setup
+      const contractId = '0.0.1234';
+      const mockContractResults = [
+        createMockContractResult({
+          to: '0xoriginalToAddress',
+          contract_id: contractId,
+          created_contract_ids: [contractId],
+        }),
+      ];
+
+      (mirrorNodeClient.getContractResults as sinon.SinonStub).resolves(mockContractResults);
+
+      (commonService.resolveEvmAddress as sinon.SinonStub)
+        .withArgs('0xoriginalFromAddress', requestDetails)
+        .resolves('0xresolvedFromAddress');
+
+      (commonService.resolveEvmAddress as sinon.SinonStub).withArgs(null, requestDetails).resolves(null);
+
+      // Execute
+      const receipts = await blockService.getBlockReceipts(blockHashOrNumber, requestDetails);
+
+      // Verify
+      expect(receipts).to.have.length(1);
+      expect(receipts[0].from).to.equal('0xresolvedFromAddress');
+      expect(receipts[0].to).to.equal(null);
+    });
+
+    it('should keep original to field when contract is not in created_contract_ids', async () => {
+      // Setup
+      const contractId = '0.0.1234';
+      const mockContractResults = [
+        createMockContractResult({
+          to: '0xoriginalToAddress',
+          contract_id: contractId,
+          created_contract_ids: ['0.0.5678'], // Different contract ID
+        }),
+      ];
+
+      (mirrorNodeClient.getContractResults as sinon.SinonStub).resolves(mockContractResults);
+
+      (commonService.resolveEvmAddress as sinon.SinonStub)
+        .withArgs('0xoriginalFromAddress', requestDetails)
+        .resolves('0xresolvedFromAddress');
+
+      (commonService.resolveEvmAddress as sinon.SinonStub)
+        .withArgs('0xoriginalToAddress', requestDetails)
+        .resolves('0xresolvedToAddress');
+
+      // Execute
+      const receipts = await blockService.getBlockReceipts(blockHashOrNumber, requestDetails);
+
+      // Verify
+      expect(receipts).to.have.length(1);
+      expect(receipts[0].from).to.equal('0xresolvedFromAddress');
+      expect(receipts[0].to).to.equal('0xresolvedToAddress');
     });
   });
 });
