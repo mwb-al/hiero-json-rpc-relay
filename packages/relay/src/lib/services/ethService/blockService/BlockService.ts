@@ -180,6 +180,11 @@ export class BlockService implements IBlockService {
         this.common.resolveEvmAddress(contractResult.from, requestDetails),
         this.common.resolveEvmAddress(contractResult.to, requestDetails),
       ]);
+
+      if (!from) {
+        throw new Error(`Failed to resolve from address: ${contractResult.from}`);
+      }
+
       const transactionReceiptParams: IRegularTransactionReceiptParams = {
         effectiveGas,
         from,
