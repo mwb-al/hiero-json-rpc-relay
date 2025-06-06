@@ -45,7 +45,7 @@ jobs:
         uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
         with:
           ref: 'main'
-          token: ${{ secrets.PAT_TOKEN }}
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
       - name: Download openrpc.json artifact
         uses: actions/download-artifact@v4
@@ -77,6 +77,10 @@ jobs:
           echo "$REPORT_OUTPUT" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
+      # This workflow automatically creates PRs when the OpenRPC JSON file differs from the upstream source.
+      # PRs are only created when actual changes are detected (SKIP_PR=false), ensuring that
+      # maintainers can review and approve schema updates before they're merged into the main branch.
+      # This provides a safety mechanism for tracking OpenRPC specification changes over time.
       - name: Perform merge
         id: merge
         run: |
@@ -114,7 +118,7 @@ jobs:
         if: env.SKIP_PR != 'true'
         uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
         with:
-          token: ${{ secrets.PAT_TOKEN }}
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           commit-message: Update OpenRPC JSON
           title: 'Update OpenRPC JSON'
           body: |
@@ -128,6 +132,5 @@ jobs:
             ```
           branch: ${{ env.UNIQUE_BRANCH }}
           base: 'main'
-          add-paths: |
-            docs/openrpc.json
-          delete-branch: false
+          add-paths: docs/openrpc.json
+          delete-branch: true

@@ -30,10 +30,10 @@ class MergeDocuments {
     const filteredOriginal = this.filterDocument(originalJson);
     const filteredModified = this.filterDocument(modifiedJson);
 
-    // Step 2: Merge methods from original to modified
+    // Step 2: Merge methods from original to hedera's modified file
     this.mergeMethods(filteredOriginal, filteredModified);
 
-    // Step 3: Merge components from original to modified
+    // Step 3: Merge components from original to hedera's modified file
     this.mergeComponents(filteredOriginal, filteredModified);
 
     // Step 4: Process the final document
@@ -63,16 +63,13 @@ class MergeDocuments {
       const name = origMethod.name;
       if (!name) continue;
 
-      // If method doesn't exist in modified, add it
       if (!modifiedMap.has(name)) {
         filteredModified.methods.push(origMethod);
         continue;
       }
       const modMethod = modifiedMap.get(name);
 
-      // Process $ref fields
       this.processRefFields(origMethod, modMethod);
-      // Process differing keys
       this.processDifferingKeys(origMethod, modMethod);
     }
   }
@@ -184,10 +181,8 @@ class MergeDocuments {
         continue;
       }
 
-      // Skip if path contains a $ref
       if (this.shouldSkipDueToRef(modMethod, path)) continue;
 
-      // Set the value from original to modified
       if (path.includes('.')) {
         setNestedValue(modMethod, path, valueFromOriginal);
       } else {
