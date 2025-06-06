@@ -9,7 +9,6 @@ This tool is used with the `openrpc-updater.yml` workflow that automatically:
 - Compares it with our local version
 - Creates a PR with the changes if differences are found
 
-
 The GitHub Actions workflow requires a `PERSONAL_ACCESS_TOKEN` secret to be configured in your repository settings.
 Add the token as a repository secret:
 - Go to your repository → Settings → Secrets and variables → Actions
@@ -76,3 +75,7 @@ Merge changes:
 ```shell script
 node cli.js --merge
 ```
+
+## Important Note
+
+The script creates a file in the `docs/openrpc.json` path, so the application must be run with appropriate file system permissions.
