@@ -128,10 +128,7 @@ class MergeDocuments {
    * @private
    */
   areValidObjects(targetObj, origObj) {
-    return targetObj &&
-      typeof targetObj === 'object' &&
-      origObj &&
-      typeof origObj === 'object';
+    return targetObj && typeof targetObj === 'object' && origObj && typeof origObj === 'object';
   }
 
   /**
@@ -151,7 +148,7 @@ class MergeDocuments {
    * @private
    */
   replaceRootObject(targetObj, sourceObj) {
-    Object.keys(targetObj).forEach(key => {
+    Object.keys(targetObj).forEach((key) => {
       delete targetObj[key];
     });
 
@@ -225,7 +222,7 @@ class MergeDocuments {
     const originalComponents = filteredOriginal.components;
     const modifiedComponents = filteredModified.components;
 
-    Object.keys(originalComponents).forEach(sectionName => {
+    Object.keys(originalComponents).forEach((sectionName) => {
       this.mergeSectionComponents(originalComponents[sectionName], modifiedComponents, sectionName);
     });
   }
@@ -267,7 +264,7 @@ class MergeDocuments {
 
     const validKeys = this.getValidKeysFromSection(originalSection);
 
-    validKeys.forEach(key => {
+    validKeys.forEach((key) => {
       this.mergeComponentKey(originalSection[key], modifiedComponents[sectionName], key);
     });
   }
@@ -291,7 +288,7 @@ class MergeDocuments {
    * @private
    */
   getValidKeysFromSection(section) {
-    return Object.keys(section).filter(key => !shouldSkipKey(key));
+    return Object.keys(section).filter((key) => !shouldSkipKey(key));
   }
 
   /**
@@ -342,9 +339,7 @@ class MergeDocuments {
    * @private
    */
   isValidDocument(document) {
-    return document &&
-      document.methods &&
-      Array.isArray(document.methods);
+    return document && document.methods && Array.isArray(document.methods);
   }
 
   /**
@@ -374,7 +369,7 @@ class MergeDocuments {
    * @private
    */
   filterValidMethods(methods) {
-    return methods.filter(method => {
+    return methods.filter((method) => {
       const methodName = method?.name;
       if (!methodName) return true;
       return !shouldSkipMethod(methodName);
@@ -388,7 +383,7 @@ class MergeDocuments {
    * @private
    */
   removeSkippedKeysFromMethods(methods) {
-    return methods.map(method => removeSkippedKeys(method));
+    return methods.map((method) => removeSkippedKeys(method));
   }
 
   /**
@@ -417,11 +412,9 @@ class MergeDocuments {
 
     const origMethodMap = getMethodMap(originalDocument);
 
-    document.methods = document.methods.map(method => {
+    document.methods = document.methods.map((method) => {
       const origMethod = origMethodMap.get(method.name);
-      return origMethod
-        ? handleRefFieldsWithOriginal(method, origMethod)
-        : method;
+      return origMethod ? handleRefFieldsWithOriginal(method, origMethod) : method;
     });
   }
 
@@ -436,11 +429,7 @@ class MergeDocuments {
       return;
     }
 
-    document.components = handleRefFieldsWithOriginal(
-      document.components,
-      originalDocument.components,
-      true,
-    );
+    document.components = handleRefFieldsWithOriginal(document.components, originalDocument.components, true);
   }
 }
 

@@ -3,10 +3,7 @@
 import { getSkippedMethodCategory } from '../config.js';
 import { getDifferingKeysByCategory, getMethodMap, groupPaths } from '../utils/openrpc.utils.js';
 
-export async function generateReport(
-  originalJson,
-  modifiedJson,
-) {
+export async function generateReport(originalJson, modifiedJson) {
   const originalMethods = getMethodMap(originalJson);
   const modifiedMethods = getMethodMap(modifiedJson);
 
@@ -42,9 +39,7 @@ export async function generateReport(
   }
 
   if (missingMethods.length > 0) {
-    console.log(
-      '\nMethods present in the original document but missing from the modified document:\n',
-    );
+    console.log('\nMethods present in the original document but missing from the modified document:\n');
     console.table(missingMethods);
     console.log('\nStatus explanation:');
     console.log('- (discarded): Methods that have been intentionally removed');

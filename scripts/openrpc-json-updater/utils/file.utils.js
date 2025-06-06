@@ -61,11 +61,13 @@ class JsonFormatter {
    * @returns {boolean} True if the value is primitive
    */
   isPrimitive(value) {
-    return value === null ||
+    return (
+      value === null ||
       value === undefined ||
       typeof value === 'number' ||
       typeof value === 'boolean' ||
-      typeof value === 'string';
+      typeof value === 'string'
+    );
   }
 
   /**
@@ -115,8 +117,7 @@ class JsonFormatter {
     const maxCompactLength = 8;
     const maxStringLength = 40;
 
-    return array.length <= maxCompactLength &&
-      array.every(item => this.isCompactableItem(item, maxStringLength));
+    return array.length <= maxCompactLength && array.every((item) => this.isCompactableItem(item, maxStringLength));
   }
 
   /**
@@ -126,9 +127,11 @@ class JsonFormatter {
    * @returns {boolean} True if item can be formatted compactly
    */
   isCompactableItem(item, maxStringLength) {
-    return (typeof item === 'string' && item.length < maxStringLength) ||
+    return (
+      (typeof item === 'string' && item.length < maxStringLength) ||
       typeof item === 'number' ||
-      typeof item === 'boolean';
+      typeof item === 'boolean'
+    );
   }
 
   /**
@@ -137,9 +140,7 @@ class JsonFormatter {
    * @returns {string} Compact formatted array
    */
   formatCompactArray(array) {
-    const items = array
-      .map(item => this.createChildFormatter().format(item))
-      .join(', ');
+    const items = array.map((item) => this.createChildFormatter().format(item)).join(', ');
     return `[${items}]`;
   }
 
@@ -150,9 +151,7 @@ class JsonFormatter {
    */
   formatExpandedArray(array) {
     const childFormatter = this.createChildFormatter();
-    const items = array
-      .map(item => this.nextIndent + childFormatter.format(item))
-      .join(',\n');
+    const items = array.map((item) => this.nextIndent + childFormatter.format(item)).join(',\n');
 
     return `[\n${items}\n${this.currentIndent}]`;
   }
@@ -170,9 +169,7 @@ class JsonFormatter {
     }
 
     const childFormatter = this.createChildFormatter();
-    const props = entries
-      .map(([key, value]) => this.formatObjectProperty(key, value, childFormatter))
-      .join(',\n');
+    const props = entries.map(([key, value]) => this.formatObjectProperty(key, value, childFormatter)).join(',\n');
 
     return `{\n${props}\n${this.currentIndent}}`;
   }

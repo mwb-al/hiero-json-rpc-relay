@@ -1,70 +1,61 @@
 // SPDX-License-Identifier: Apache-2.0
 
-export const SKIPPED_KEYS = [
-  "examples",
-  "baseFeePerBlobGas",
-  "blobGasUsedRatio",
-];
+export const SKIPPED_KEYS = ['examples', 'baseFeePerBlobGas', 'blobGasUsedRatio'];
 
 export const CUSTOM_FIELDS = [
-    "eth_accounts.description",
-    "eth_accounts.result.description",
-    "eth_accounts.result.schema.title",
+  'eth_accounts.description',
+  'eth_accounts.result.description',
+  'eth_accounts.result.schema.title',
 
-    "eth_call.summary",
+  'eth_call.summary',
 
-    "eth_coinbase.summary",
-    "eth_blobBaseFee.summary",
+  'eth_coinbase.summary',
+  'eth_blobBaseFee.summary',
 
-    "eth_feeHistory.summary",
-    "eth_feeHistory.description",
-    "eth_feeHistory.params.2.description",
-    "eth_feeHistory.result.name",
-    "eth_feeHistory.result.schema.properties.gasUsedRatio.description",
-    "eth_feeHistory.result.schema.properties.baseFeePerGas.title",
-    "eth_feeHistory.result.schema.properties.baseFeePerGas.description",
-    "eth_feeHistory.result.schema.properties.reward.title",
+  'eth_feeHistory.summary',
+  'eth_feeHistory.description',
+  'eth_feeHistory.params.2.description',
+  'eth_feeHistory.result.name',
+  'eth_feeHistory.result.schema.properties.gasUsedRatio.description',
+  'eth_feeHistory.result.schema.properties.baseFeePerGas.title',
+  'eth_feeHistory.result.schema.properties.baseFeePerGas.description',
+  'eth_feeHistory.result.schema.properties.reward.title',
 
-    "eth_gasPrice.summary",
+  'eth_gasPrice.summary',
 
-    "eth_getBalance.result.schema.title",
+  'eth_getBalance.result.schema.title',
 
-    "eth_getBlockTransactionCountByHash.result.name",
-    "eth_getBlockTransactionCountByNumber.result.name",
+  'eth_getBlockTransactionCountByHash.result.name',
+  'eth_getBlockTransactionCountByNumber.result.name',
 
-    "eth_getLogs.summary",
-    "eth_getStorageAt.summary",
-    "eth_getStorageAt.params.1.name",
-    "eth_getStorageAt.result.name",
+  'eth_getLogs.summary',
+  'eth_getStorageAt.summary',
+  'eth_getStorageAt.params.1.name',
+  'eth_getStorageAt.result.name',
 
-    "eth_getTransactionCount.summary",
-    "eth_getTransactionCount.result.name",
-    "eth_getTransactionCount.result.schema.title",
+  'eth_getTransactionCount.summary',
+  'eth_getTransactionCount.result.name',
+  'eth_getTransactionCount.result.schema.title',
 
-    "eth_maxPriorityFeePerGas.summary",
-    "eth_maxPriorityFeePerGas.result.schema.description",
-    "eth_maxPriorityFeePerGas.result.schema.title",
+  'eth_maxPriorityFeePerGas.summary',
+  'eth_maxPriorityFeePerGas.result.schema.description',
+  'eth_maxPriorityFeePerGas.result.schema.title',
 
-    "eth_newBlockFilter.summary",
-    "eth_newBlockFilter.result.name",
+  'eth_newBlockFilter.summary',
+  'eth_newBlockFilter.result.name',
 ];
 
-export const DISCARDED_METHODS = [
-  "engine_*",
-];
+export const DISCARDED_METHODS = ['engine_*'];
 
 export const NOT_IMPLEMENTED_METHODS = [
-  "debug_getBadBlocks",
-  "debug_getRawBlock",
-  "debug_getRawHeader",
-  "debug_getRawReceipts",
-  "debug_getRawTransaction",
+  'debug_getBadBlocks',
+  'debug_getRawBlock',
+  'debug_getRawHeader',
+  'debug_getRawReceipts',
+  'debug_getRawTransaction',
 ];
 
-export const SKIPPED_METHODS = [
-  ...DISCARDED_METHODS,
-  ...NOT_IMPLEMENTED_METHODS,
-];
+export const SKIPPED_METHODS = [...DISCARDED_METHODS, ...NOT_IMPLEMENTED_METHODS];
 
 export function shouldSkipMethod(methodName, path) {
   if (!methodName) return false;
@@ -120,11 +111,11 @@ export function getSkippedMethodCategory(methodName) {
     return false;
   };
 
-  if (DISCARDED_METHODS.some(pattern => matchesPattern(pattern, methodName))) {
+  if (DISCARDED_METHODS.some((pattern) => matchesPattern(pattern, methodName))) {
     return 'discarded';
   }
 
-  if (NOT_IMPLEMENTED_METHODS.some(pattern => matchesPattern(pattern, methodName))) {
+  if (NOT_IMPLEMENTED_METHODS.some((pattern) => matchesPattern(pattern, methodName))) {
     return 'not implemented';
   }
 

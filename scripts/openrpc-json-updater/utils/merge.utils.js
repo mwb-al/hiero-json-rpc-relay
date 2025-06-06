@@ -59,7 +59,7 @@ export function removeSkippedKeys(obj) {
   if (!obj || typeof obj !== 'object') return obj;
 
   if (Array.isArray(obj)) {
-    return obj.map(item => removeSkippedKeys(item));
+    return obj.map((item) => removeSkippedKeys(item));
   }
 
   const result = {};
@@ -79,11 +79,11 @@ export function handleRefField(obj) {
   if (!obj || typeof obj !== 'object') return obj;
 
   if (Array.isArray(obj)) {
-    return obj.map(item => handleRefField(item));
+    return obj.map((item) => handleRefField(item));
   }
 
   if (obj['$ref'] !== undefined) {
-    return { '$ref': obj['$ref'] };
+    return { $ref: obj['$ref'] };
   }
 
   const result = {};
@@ -234,7 +234,7 @@ class RefPathFinder {
    * @param {Array} paths - The accumulated paths array
    */
   processObjectProperties(obj, currentPath, paths) {
-    Object.keys(obj).forEach(key => {
+    Object.keys(obj).forEach((key) => {
       const value = obj[key];
       if (this.shouldProcessProperty(value)) {
         const propertyPath = this.buildPath(currentPath, key);
@@ -400,7 +400,7 @@ class RefFieldHandler {
    * @returns {Object} Object with only $ref field
    */
   createRefOnlyObject(refValue) {
-    return { '$ref': refValue };
+    return { $ref: refValue };
   }
 
   /**
@@ -412,7 +412,7 @@ class RefFieldHandler {
   processObjectProperties(obj, origObj) {
     const newObj = {};
 
-    Object.keys(obj).forEach(key => {
+    Object.keys(obj).forEach((key) => {
       const value = obj[key];
       const origValue = origObj[key];
       newObj[key] = this.handle(value, origValue);
@@ -427,7 +427,7 @@ class RefFieldHandler {
  */
 export function filterSkippedMethods(methods) {
   if (!Array.isArray(methods)) return [];
-  return methods.filter(method => {
+  return methods.filter((method) => {
     const methodName = method?.name;
     if (!methodName) return true;
     return !shouldSkipMethod(methodName);

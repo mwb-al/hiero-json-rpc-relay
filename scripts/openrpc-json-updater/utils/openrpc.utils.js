@@ -56,7 +56,7 @@ export function groupPaths(paths, minGroupSize = 3) {
     }
 
     return Object.keys(prefixCounters)
-      .filter(prefix => prefixCounters[prefix] >= minGroupSize)
+      .filter((prefix) => prefixCounters[prefix] >= minGroupSize)
       .sort((a, b) => {
         const countDiff = prefixCounters[b] - prefixCounters[a];
         if (countDiff !== 0) return countDiff;
@@ -68,7 +68,7 @@ export function groupPaths(paths, minGroupSize = 3) {
   }
 
   function getSubpaths(paths, prefix) {
-    return paths.filter(path => path.startsWith(prefix + '.') || path === prefix);
+    return paths.filter((path) => path.startsWith(prefix + '.') || path === prefix);
   }
 
   function groupPathsHierarchically(paths) {
@@ -131,9 +131,7 @@ function processDifferences(differences, origMethod, modMethod, result) {
 }
 
 function shouldSkipDifferencePath(fullPath) {
-  return !fullPath ||
-    fullPath.startsWith('name') ||
-    shouldSkipPath(fullPath);
+  return !fullPath || fullPath.startsWith('name') || shouldSkipPath(fullPath);
 }
 
 function categorizeDifference(fullPath, origMethod, modMethod, result) {
@@ -176,14 +174,11 @@ function isKeyMissing(key, obj) {
 }
 
 function shouldRecurseIntoObjects(origValue, modValue) {
-  return isNonArrayObject(origValue) &&
-    isNonArrayObject(modValue);
+  return isNonArrayObject(origValue) && isNonArrayObject(modValue);
 }
 
 function isNonArrayObject(value) {
-  return typeof value === 'object' &&
-    value !== null &&
-    !Array.isArray(value);
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 export function getDifferingKeys(origMethod, modMethod) {
