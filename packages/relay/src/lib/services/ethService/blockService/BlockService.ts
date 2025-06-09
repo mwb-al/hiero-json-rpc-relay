@@ -207,12 +207,8 @@ export class BlockService implements IBlockService {
       contractResult.logs = logsByHash.get(contractResult.hash) || [];
       const [from, to] = await Promise.all([
         this.common.resolveEvmAddress(contractResult.from, requestDetails),
-        this.common.resolveEvmAddress(contractResult.to, requestDetails),
+        contractResult.to === null ? null : this.common.resolveEvmAddress(contractResult.to, requestDetails),
       ]);
-
-      if (!from) {
-        throw new Error(`Failed to resolve from address: ${contractResult.from}`);
-      }
 
       const transactionReceiptParams: IRegularTransactionReceiptParams = {
         effectiveGas,

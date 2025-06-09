@@ -420,11 +420,11 @@ export class CommonService implements ICommonService {
   }
 
   public async resolveEvmAddress(
-    address: string | null,
+    address: string,
     requestDetails: RequestDetails,
     searchableTypes = [constants.TYPE_CONTRACT, constants.TYPE_TOKEN, constants.TYPE_ACCOUNT],
-  ): Promise<string | null> {
-    if (!address) return null;
+  ): Promise<string> {
+    if (!address) return address;
 
     const entity = await this.mirrorNodeClient.resolveEntityType(
       address,

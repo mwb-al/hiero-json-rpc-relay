@@ -443,9 +443,7 @@ export class TransactionService implements ITransactionService {
       this.common.resolveEvmAddress(receiptResponse.from, requestDetails),
       this.common.resolveEvmAddress(receiptResponse.to, requestDetails),
     ]);
-    if (!from) {
-      throw predefined.INTERNAL_ERROR(`Could not resolve from address for transaction ${receiptResponse.hash}`);
-    }
+
     const transactionReceiptParams: IRegularTransactionReceiptParams = {
       effectiveGas,
       from,

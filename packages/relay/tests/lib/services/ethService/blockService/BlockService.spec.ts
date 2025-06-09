@@ -146,25 +146,6 @@ describe('BlockService', () => {
         .be.true;
     });
 
-    it('should throw error when from address cannot be resolved', async () => {
-      // Setup
-      const mockContractResults = [createMockContractResult()];
-      (mirrorNodeClient.getContractResults as sinon.SinonStub).resolves(mockContractResults);
-
-      (commonService.resolveEvmAddress as sinon.SinonStub)
-        .withArgs('0xoriginalFromAddress', requestDetails, undefined)
-        .resolves(null);
-
-      (commonService.resolveEvmAddress as sinon.SinonStub)
-        .withArgs('0xoriginalToAddress', requestDetails, undefined)
-        .resolves('0xresolvedToAddress');
-
-      // Execute & Verify
-      await expect(blockService.getBlockReceipts(blockHashOrNumber, requestDetails)).to.be.rejectedWith(
-        `Failed to resolve from address: 0xoriginalFromAddress`,
-      );
-    });
-
     it('should handle null to field for contract creation transactions', async () => {
       // Setup
       const mockContractResults = [
@@ -180,8 +161,6 @@ describe('BlockService', () => {
         .withArgs('0xoriginalFromAddress', requestDetails)
         .resolves('0xresolvedFromAddress');
 
-      (commonService.resolveEvmAddress as sinon.SinonStub).withArgs(null, requestDetails).resolves(null);
-
       // Execute
       const receipts = await blockService.getBlockReceipts(blockHashOrNumber, requestDetails);
 
@@ -193,7 +172,7 @@ describe('BlockService', () => {
 
       expect((commonService.resolveEvmAddress as sinon.SinonStub).calledWith('0xoriginalFromAddress', requestDetails))
         .to.be.true;
-      expect((commonService.resolveEvmAddress as sinon.SinonStub).calledWith(null, requestDetails)).to.be.true;
+      expect((commonService.resolveEvmAddress as sinon.SinonStub).calledWith(null, requestDetails)).to.be.false;
     });
 
     it('should set to field to null when contract is in created_contract_ids', async () => {
