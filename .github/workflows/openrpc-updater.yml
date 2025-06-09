@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'docs/openrpc.json'
 
 jobs:
   clone-and-build-execution-apis:
