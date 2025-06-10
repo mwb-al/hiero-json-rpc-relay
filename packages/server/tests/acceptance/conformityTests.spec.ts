@@ -321,6 +321,7 @@ async function processFileContent(directory, file, content) {
     ? checkResponseFormat(response.response.data, content.response)
     : isResponseValid(schema, response);
   expect(valid).to.be.true;
+  if (response.result) expect(response.result).to.be.equal(JSON.parse(content.response).result);
 }
 
 const synthesizeTestCases = function (testCases, updateParamIfNeeded) {
