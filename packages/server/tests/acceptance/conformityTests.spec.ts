@@ -210,10 +210,6 @@ async function checkRequestBody(fileName, request) {
       request.params[0] = transactionHash;
     }
   }
-  if (request.method === 'eth_getBalance') {
-    request.params[0] = ETHEREUM_NETWORK_ACCOUNT_HASH;
-    request.params[1] = currentBlockHash;
-  }
   if (request.method === 'eth_getTransactionByHash' || request.method === 'eth_getTransactionReceipt') {
     request = formatTransactionByHashAndReceiptRequests(fileName, request);
   }
