@@ -3,15 +3,6 @@
 export const SKIPPED_KEYS = ['examples', 'baseFeePerBlobGas', 'blobGasUsedRatio'];
 
 export const CUSTOM_FIELDS = [
-  'eth_accounts.description',
-  'eth_accounts.result.description',
-  'eth_accounts.result.schema.title',
-
-  'eth_call.summary',
-
-  'eth_coinbase.summary',
-  'eth_blobBaseFee.summary',
-
   'eth_feeHistory.summary',
   'eth_feeHistory.description',
   'eth_feeHistory.params.2.description',
@@ -53,6 +44,8 @@ export const NOT_IMPLEMENTED_METHODS = [
   'debug_getRawHeader',
   'debug_getRawReceipts',
   'debug_getRawTransaction',
+  'eth_coinbase',
+  'eth_blobBaseFee',
 ];
 
 export const SKIPPED_METHODS = [...DISCARDED_METHODS, ...NOT_IMPLEMENTED_METHODS];

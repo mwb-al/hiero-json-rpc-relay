@@ -23,12 +23,11 @@ export async function generateReport(originalJson, modifiedJson) {
     if (!modifiedMethods.has(name)) continue;
     const modMethod = modifiedMethods.get(name);
 
-    const { valueDiscrepancies, customFields } = getDifferingKeysByCategory(origMethod, modMethod);
-    if (valueDiscrepancies.length > 0 || customFields.length > 0) {
+    const { valueDiscrepancies } = getDifferingKeysByCategory(origMethod, modMethod);
+    if (valueDiscrepancies.length > 0) {
       changedMethods.push({
         method: name,
         valueDiscrepancies: groupPaths(valueDiscrepancies, 3),
-        customFields: groupPaths(customFields, 3),
       });
     }
   }
@@ -48,10 +47,9 @@ export async function generateReport(originalJson, modifiedJson) {
 
   if (changedMethods.length > 0) {
     console.log('\nMethods with differences between documents:\n');
-    console.table(changedMethods, ['method', 'valueDiscrepancies', 'customFields']);
+    console.table(changedMethods, ['method', 'valueDiscrepancies']);
     console.log('\nExplanation:');
     console.log('- valueDiscrepancies: Fields that exist in both documents but have different values');
-    console.log('- customFields: Fields that exist only in the modified document (custom additions)');
     console.log('- Entries with format "path (N diffs)" indicate N differences within that path');
   }
 }

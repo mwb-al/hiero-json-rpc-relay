@@ -171,13 +171,6 @@ class MergeDocuments {
 
       const valueFromOriginal = getNestedValue(origMethod, path);
 
-      const existsInOriginal = hasNestedPath(origMethod, path);
-      const existsInModified = hasNestedPath(modMethod, path);
-
-      if (!existsInOriginal && existsInModified) {
-        continue;
-      }
-
       if (this.shouldSkipDueToRef(modMethod, path)) continue;
 
       if (path.includes('.')) {

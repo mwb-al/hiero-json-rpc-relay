@@ -104,7 +104,6 @@ export function groupPaths(paths, minGroupSize = 3) {
 export function getDifferingKeysByCategory(origMethod, modMethod) {
   const result = {
     valueDiscrepancies: [],
-    customFields: [],
   };
 
   const differences = compareIgnoringFormatting(origMethod, modMethod) || [];
@@ -140,8 +139,6 @@ function categorizeDifference(fullPath, origMethod, modMethod, result) {
 
   if (existsInOrig && existsInMod) {
     result.valueDiscrepancies.push(fullPath);
-  } else if (!existsInOrig && existsInMod) {
-    result.customFields.push(fullPath);
   }
 }
 
@@ -182,6 +179,6 @@ function isNonArrayObject(value) {
 }
 
 export function getDifferingKeys(origMethod, modMethod) {
-  const { valueDiscrepancies, customFields } = getDifferingKeysByCategory(origMethod, modMethod);
-  return [...new Set([...valueDiscrepancies, ...customFields])];
+  const { valueDiscrepancies } = getDifferingKeysByCategory(origMethod, modMethod);
+  return [...new Set(valueDiscrepancies)];
 }
