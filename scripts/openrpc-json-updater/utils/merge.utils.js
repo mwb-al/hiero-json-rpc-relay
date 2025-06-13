@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import { shouldSkipKey, shouldSkipMethod } from '../config.js';
+import { getSkippedMethodCategory,shouldSkipKey } from '../config.js';
 
 /**
  * Sets a nested value in an object using a dot-notation path
@@ -42,14 +42,6 @@ export function getNestedValue(obj, path) {
   }
 
   return current;
-}
-
-/**
- * Checks if a nested path exists in an object
- */
-export function hasNestedPath(obj, path) {
-  const value = getNestedValue(obj, path);
-  return value !== undefined;
 }
 
 /**
@@ -430,6 +422,8 @@ export function filterSkippedMethods(methods) {
   return methods.filter((method) => {
     const methodName = method?.name;
     if (!methodName) return true;
-    return !shouldSkipMethod(methodName);
+
+    const category = getSkippedMethodCategory(methodName);
+    return category !== 'discarded';
   });
 }

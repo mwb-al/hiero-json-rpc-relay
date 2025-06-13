@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import { getSkippedMethodCategory } from '../config.js';
+import { getSkippedMethodCategory, NOT_IMPLEMENTED_METHODS } from '../config.js';
 import { getDifferingKeysByCategory, getMethodMap, groupPaths } from '../utils/openrpc.utils.js';
 
 export async function generateReport(originalJson, modifiedJson) {
@@ -8,19 +8,33 @@ export async function generateReport(originalJson, modifiedJson) {
   const modifiedMethods = getMethodMap(modifiedJson);
 
   const missingMethods = [];
+
+  for (const method of NOT_IMPLEMENTED_METHODS) {
+    missingMethods.push({
+      missingMethod: method,
+      status: 'not implemented',
+    });
+  }
   for (const name of originalMethods.keys()) {
     if (!modifiedMethods.has(name)) {
-      const category = getSkippedMethodCategory(name);
-      missingMethods.push({
-        missingMethod: name,
-        status: category ? `${category}` : 'a new method',
-      });
+      const alreadyReported = missingMethods.some(item => item.missingMethod === name);
+      if (!alreadyReported) {
+        const category = getSkippedMethodCategory(name);
+        missingMethods.push({
+          missingMethod: name,
+          status: category ? `${category}` : 'a new method',
+        });
+      }
     }
   }
 
   const changedMethods = [];
   for (const [name, origMethod] of originalMethods) {
     if (!modifiedMethods.has(name)) continue;
+    const category = getSkippedMethodCategory(name);
+    if (category === 'discarded' || category === 'not implemented') {
+      continue;
+    }
     const modMethod = modifiedMethods.get(name);
 
     const { valueDiscrepancies } = getDifferingKeysByCategory(origMethod, modMethod);

@@ -8,7 +8,6 @@ import {
   getObjectByPath,
   handleRefField,
   handleRefFieldsWithOriginal,
-  hasNestedPath,
   removeSkippedKeys,
   setNestedValue,
   setObjectByPath,
@@ -231,7 +230,7 @@ class MergeDocuments {
   }
 
   /**
-   * Ensures the components object exists in the target document
+   * Ensures the component object exists in the target document
    * @param {Object} document - The document to ensure components exist in
    * @private
    */
@@ -328,7 +327,7 @@ class MergeDocuments {
   /**
    * Validates if the document has the required structure
    * @param {Object} document - The document to validate
-   * @returns {boolean} True if document is valid
+   * @returns {boolean} True if a document is valid
    * @private
    */
   isValidDocument(document) {
@@ -351,22 +350,8 @@ class MergeDocuments {
    * @private
    */
   filterAndCleanMethods(document) {
-    document.methods = this.filterValidMethods(document.methods);
+    document.methods = filterSkippedMethods(document.methods);
     document.methods = this.removeSkippedKeysFromMethods(document.methods);
-  }
-
-  /**
-   * Filters methods that should not be skipped
-   * @param {Array} methods - Array of methods to filter
-   * @returns {Array} Filtered array of methods
-   * @private
-   */
-  filterValidMethods(methods) {
-    return methods.filter((method) => {
-      const methodName = method?.name;
-      if (!methodName) return true;
-      return !shouldSkipMethod(methodName);
-    });
   }
 
   /**
