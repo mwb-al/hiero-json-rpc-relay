@@ -102,8 +102,7 @@ class TransactionReceiptFactory {
     // Determine contract address if it exists
     const contractAddress = TransactionReceiptFactory.getContractAddressFromReceipt(receiptResponse);
 
-    const { contractResult } = receiptResponse;
-    if (contractResult.created_contract_ids.includes(contractResult.contract_id)) {
+    if (receiptResponse.created_contract_ids.includes(receiptResponse.contract_id)) {
       to = null;
     }
 
