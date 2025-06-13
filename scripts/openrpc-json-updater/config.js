@@ -6,34 +6,12 @@ export const CUSTOM_FIELDS = [
   'eth_feeHistory.summary',
   'eth_feeHistory.description',
   'eth_feeHistory.params.2.description',
-  'eth_feeHistory.result.name',
   'eth_feeHistory.result.schema.properties.gasUsedRatio.description',
   'eth_feeHistory.result.schema.properties.baseFeePerGas.title',
   'eth_feeHistory.result.schema.properties.baseFeePerGas.description',
   'eth_feeHistory.result.schema.properties.reward.title',
-
-  'eth_gasPrice.summary',
-
-  'eth_getBalance.result.schema.title',
-
-  'eth_getBlockTransactionCountByHash.result.name',
-  'eth_getBlockTransactionCountByNumber.result.name',
-
-  'eth_getLogs.summary',
-  'eth_getStorageAt.summary',
-  'eth_getStorageAt.params.1.name',
-  'eth_getStorageAt.result.name',
-
   'eth_getTransactionCount.summary',
-  'eth_getTransactionCount.result.name',
-  'eth_getTransactionCount.result.schema.title',
-
-  'eth_maxPriorityFeePerGas.summary',
   'eth_maxPriorityFeePerGas.result.schema.description',
-  'eth_maxPriorityFeePerGas.result.schema.title',
-
-  'eth_newBlockFilter.summary',
-  'eth_newBlockFilter.result.name',
 ];
 
 export const DISCARDED_METHODS = ['engine_*'];
@@ -46,6 +24,8 @@ export const NOT_IMPLEMENTED_METHODS = [
   'debug_getRawTransaction',
   'eth_coinbase',
   'eth_blobBaseFee',
+  'eth_syncing',
+  'eth_getProof',
 ];
 
 export const SKIPPED_METHODS = [...DISCARDED_METHODS, ...NOT_IMPLEMENTED_METHODS];
