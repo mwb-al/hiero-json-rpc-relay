@@ -138,13 +138,6 @@ export class BlockService implements IBlockService {
       return null;
     }
 
-    const blockNumber = block.number;
-    const cacheKey = `${constants.CACHE_KEY.ETH_GET_BLOCK_RECEIPTS}_${blockNumber}`;
-    const cachedResponse = await this.cacheService.getAsync(cacheKey, constants.ETH_GET_BLOCK_RECEIPTS, requestDetails);
-    if (cachedResponse) {
-      return cachedResponse;
-    }
-
     const paramTimestamp: IContractResultsParams = {
       timestamp: [`lte:${block.timestamp.to}`, `gte:${block.timestamp.from}`],
     };
