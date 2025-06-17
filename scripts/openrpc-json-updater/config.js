@@ -12,6 +12,7 @@ export const CUSTOM_FIELDS = [
   'eth_feeHistory.result.schema.properties.reward.title',
   'eth_getTransactionCount.summary',
   'eth_maxPriorityFeePerGas.result.schema.description',
+  'eth_getStorageAt.params.2.required',
 ];
 
 export const DISCARDED_METHODS = ['engine_*'];
