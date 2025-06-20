@@ -11,7 +11,6 @@ import { DebugImpl } from '@hashgraph/json-rpc-relay/dist/lib/debug';
 import { CacheService } from '@hashgraph/json-rpc-relay/dist/lib/services/cacheService/cacheService';
 import { Validator } from '@hashgraph/json-rpc-relay/dist/lib/validators';
 import * as Constants from '@hashgraph/json-rpc-relay/dist/lib/validators';
-import { JsonRpcError } from '@hashgraph/json-rpc-relay/src';
 import { CommonService } from '@hashgraph/json-rpc-relay/src/lib/services';
 import Axios, { AxiosInstance } from 'axios';
 import { expect } from 'chai';
@@ -2489,7 +2488,7 @@ describe('RPC Server', function () {
           await testClient.post('/', {
             jsonrpc: '2.0',
             method: 'debug_traceTransaction',
-            params: [contractHash1, TracerType.CallTracer, { onlyTopCall: true }],
+            params: [contractHash1, { tracer: TracerType.CallTracer, tracerConfig: { onlyTopCall: true } }],
             id: 1,
           }),
         ).to.not.throw;
@@ -2502,8 +2501,10 @@ describe('RPC Server', function () {
             method: 'debug_traceTransaction',
             params: [
               contractHash1,
-              TracerType.OpcodeLogger,
-              { disableStack: false, disableStorage: false, enableMemory: true },
+              {
+                tracer: TracerType.OpcodeLogger,
+                tracerConfig: { disableStack: false, disableStorage: false, enableMemory: true },
+              },
             ],
             id: 1,
           }),
@@ -2526,7 +2527,7 @@ describe('RPC Server', function () {
           await testClient.post('/', {
             jsonrpc: '2.0',
             method: 'debug_traceTransaction',
-            params: [contractHash1, TracerType.CallTracer],
+            params: [contractHash1, { tracer: TracerType.CallTracer }],
             id: '2',
           }),
         ).to.not.throw;
@@ -2537,7 +2538,7 @@ describe('RPC Server', function () {
           await testClient.post('/', {
             jsonrpc: '2.0',
             method: 'debug_traceTransaction',
-            params: [contractHash1, TracerType.CallTracer, {}],
+            params: [contractHash1, { tracer: TracerType.CallTracer, tracerConfig: {} }],
             id: '2',
           }),
         ).to.not.throw;
@@ -2549,39 +2550,6 @@ describe('RPC Server', function () {
             jsonrpc: '2.0',
             method: 'debug_traceTransaction',
             params: [contractHash1],
-            id: '2',
-          }),
-        ).to.not.throw;
-      });
-
-      it('should execute with unknown property in TracerConfig', async () => {
-        expect(
-          await testClient.post('/', {
-            jsonrpc: '2.0',
-            method: 'debug_traceTransaction',
-            params: [contractHash1, { disableMemory: true, disableStack: true }],
-            id: '2',
-          }),
-        ).to.not.throw;
-      });
-
-      it('should execute with unknown property in TracerConfigWrapper.tracerConfig', async () => {
-        expect(
-          await testClient.post('/', {
-            jsonrpc: '2.0',
-            method: 'debug_traceTransaction',
-            params: [contractHash1, { tracerConfig: { disableMemory: true, disableStorage: true } }],
-            id: '2',
-          }),
-        ).to.not.throw;
-      });
-
-      it('should execute with empty TracerConfigWrapper.tracerConfig', async function () {
-        expect(
-          await testClient.post('/', {
-            jsonrpc: '2.0',
-            method: 'debug_traceTransaction',
-            params: [contractHash1, { tracerConfig: {} }],
             id: '2',
           }),
         ).to.not.throw;
@@ -2607,7 +2575,7 @@ describe('RPC Server', function () {
           await testClient.post('/', {
             jsonrpc: '2.0',
             method: 'debug_traceTransaction',
-            params: ['invalidHash', TracerType.OpcodeLogger],
+            params: ['invalidHash', { tracer: TracerType.OpcodeLogger }],
             id: '2',
           });
 
@@ -2635,7 +2603,7 @@ describe('RPC Server', function () {
           BaseTest.invalidParamError(
             error.response,
             Validator.ERROR_CODE,
-            `Invalid parameter 1: The value passed is not valid: invalidTracerType. ${Validator.TYPES.tracerType.error} OR ${Validator.TYPES.tracerConfig.error} OR ${Validator.TYPES.tracerConfigWrapper.error}`,
+            `Invalid parameter 1: Expected TracerConfigWrapper which contains a valid TracerType and/or TracerConfig, value: invalidTracerType`,
           );
         }
       });
@@ -2645,7 +2613,7 @@ describe('RPC Server', function () {
           await testClient.post('/', {
             jsonrpc: '2.0',
             method: 'debug_traceTransaction',
-            params: [contractHash1, TracerType.CallTracer, { invalidConfig: true }],
+            params: [contractHash1, { tracer: TracerType.CallTracer, tracerConfig: { invalidConfig: true } }],
             id: '2',
           });
 
@@ -2654,7 +2622,7 @@ describe('RPC Server', function () {
           BaseTest.invalidParamError(
             error.response,
             Validator.ERROR_CODE,
-            `Invalid parameter 2: ${Validator.TYPES.tracerConfig.error}, value: ${JSON.stringify({
+            `Invalid parameter 'tracerConfig' for TracerConfigWrapper: Expected TracerConfig, value: ${JSON.stringify({
               invalidConfig: true,
             })}`,
           );
@@ -2666,7 +2634,10 @@ describe('RPC Server', function () {
           await testClient.post('/', {
             jsonrpc: '2.0',
             method: 'debug_traceTransaction',
-            params: [contractHash1, { enableMemory: 'must be a boolean' }],
+            params: [
+              contractHash1,
+              { tracer: TracerType.OpcodeLogger, tracerConfig: { enableMemory: 'must be a boolean' } },
+            ],
             id: '2',
           });
 
@@ -2675,7 +2646,9 @@ describe('RPC Server', function () {
           BaseTest.invalidParamError(
             error.response,
             Validator.ERROR_CODE,
-            `Invalid parameter 'enableMemory' for OpcodeLoggerConfig: ${Validator.TYPES.boolean.error}, value: must be a boolean`,
+            `Invalid parameter 'tracerConfig' for TracerConfigWrapper: Expected TracerConfig, value: ${JSON.stringify({
+              enableMemory: 'must be a boolean',
+            })}`,
           );
         }
       });
@@ -2685,7 +2658,10 @@ describe('RPC Server', function () {
           await testClient.post('/', {
             jsonrpc: '2.0',
             method: 'debug_traceTransaction',
-            params: [contractHash1, { disableStack: 'must be a boolean' }],
+            params: [
+              contractHash1,
+              { tracer: TracerType.OpcodeLogger, tracerConfig: { disableStack: 'must be a boolean' } },
+            ],
             id: '2',
           });
 
@@ -2694,7 +2670,9 @@ describe('RPC Server', function () {
           BaseTest.invalidParamError(
             error.response,
             Validator.ERROR_CODE,
-            `Invalid parameter 'disableStack' for OpcodeLoggerConfig: ${Validator.TYPES.boolean.error}, value: must be a boolean`,
+            `Invalid parameter 'tracerConfig' for TracerConfigWrapper: Expected TracerConfig, value: ${JSON.stringify({
+              disableStack: 'must be a boolean',
+            })}`,
           );
         }
       });
@@ -2704,7 +2682,10 @@ describe('RPC Server', function () {
           await testClient.post('/', {
             jsonrpc: '2.0',
             method: 'debug_traceTransaction',
-            params: [contractHash1, { disableStorage: 'must be a boolean' }],
+            params: [
+              contractHash1,
+              { tracer: TracerType.OpcodeLogger, tracerConfig: { disableStorage: 'must be a boolean' } },
+            ],
             id: '2',
           });
 
@@ -2713,7 +2694,9 @@ describe('RPC Server', function () {
           BaseTest.invalidParamError(
             error.response,
             Validator.ERROR_CODE,
-            `Invalid parameter 'disableStorage' for OpcodeLoggerConfig: ${Validator.TYPES.boolean.error}, value: must be a boolean`,
+            `Invalid parameter 'tracerConfig' for TracerConfigWrapper: Expected TracerConfig, value: ${JSON.stringify({
+              disableStorage: 'must be a boolean',
+            })}`,
           );
         }
       });
@@ -2761,7 +2744,7 @@ describe('RPC Server', function () {
           await testClient.post('/', {
             jsonrpc: '2.0',
             method: 'debug_traceTransaction',
-            params: [contractHash1, TracerType.CallTracer, { invalidProperty: true }],
+            params: [contractHash1, { tracer: TracerType.CallTracer, tracerConfig: { invalidProperty: true } }],
             id: '2',
           });
 
@@ -2770,7 +2753,9 @@ describe('RPC Server', function () {
           BaseTest.invalidParamError(
             error.response,
             Validator.ERROR_CODE,
-            `Invalid parameter 2: ${Validator.TYPES.tracerConfig.error}, value: ${JSON.stringify({
+            `Invalid parameter 'tracerConfig' for TracerConfigWrapper: ${
+              Validator.TYPES.tracerConfig.error
+            }, value: ${JSON.stringify({
               invalidProperty: true,
             })}`,
           );
