@@ -853,7 +853,9 @@ describe('@api-batch-1 RPC Server Acceptance Tests', function () {
         expect(deploymentReceiptInBlock).to.have.property('to');
         expect(deploymentReceiptInBlock.to).to.be.null;
         expect(deploymentReceiptInBlock.contractAddress).to.not.be.null;
-        expect(deploymentReceiptInBlock.contractAddress).to.equal(contractDeployment.target);
+        expect(deploymentReceiptInBlock.contractAddress.toLowerCase()).to.equal(
+          contractDeployment.target.toString().toLowerCase(),
+        );
       });
 
       it('should return null for "eth_getBlockReceipts" when block is not found', async function () {
