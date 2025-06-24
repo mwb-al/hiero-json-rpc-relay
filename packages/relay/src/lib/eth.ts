@@ -268,9 +268,6 @@ export class EthImpl implements Eth {
     if (callDataSize >= constants.FUNCTION_SELECTOR_CHAR_LENGTH) {
       this.eventEmitter.emit(constants.EVENTS.ETH_EXECUTION, {
         method: constants.ETH_ESTIMATE_GAS,
-        functionSelector: callData!.substring(0, constants.FUNCTION_SELECTOR_CHAR_LENGTH),
-        from: transaction.from || '',
-        to: transaction.to || '',
         requestDetails: requestDetails,
       });
     }
@@ -982,9 +979,6 @@ export class EthImpl implements Eth {
 
     this.eventEmitter.emit(constants.EVENTS.ETH_EXECUTION, {
       method: 'eth_call',
-      functionSelector: callData?.substring(0, constants.FUNCTION_SELECTOR_CHAR_LENGTH) || '',
-      from: call.from || '',
-      to: call.to || '',
       requestDetails: requestDetails,
     });
 
@@ -1104,7 +1098,7 @@ export class EthImpl implements Eth {
    *
    * @param {string } blockHashOrBlockNumber The block hash, block number, or block tag
    * @param {RequestDetails} requestDetails The request details for logging and tracking
-   * @returns {Promise<Receipt[]>} Array of transaction receipts for the block
+   * @returns {Promise<ITransactionReceipt[] | null>} Array of transaction receipts for the block or null if block not found
    */
   @rpcMethod
   @rpcParamValidationRules({
@@ -1116,7 +1110,7 @@ export class EthImpl implements Eth {
   public async getBlockReceipts(
     blockHashOrBlockNumber: string,
     requestDetails: RequestDetails,
-  ): Promise<ITransactionReceipt[]> {
+  ): Promise<ITransactionReceipt[] | null> {
     return await this.blockService.getBlockReceipts(blockHashOrBlockNumber, requestDetails);
   }
 
@@ -1134,6 +1128,24 @@ export class EthImpl implements Eth {
   getProof(requestDetails: RequestDetails): JsonRpcError {
     if (this.logger.isLevelEnabled('trace')) {
       this.logger.trace(`${requestDetails.formattedRequestId} getProof()`);
+    }
+    return predefined.UNSUPPORTED_METHOD;
+  }
+
+  /**
+   * Always returns UNSUPPORTED_METHOD error.
+   *
+   * @rpcMethod Exposed as eth_createAccessList RPC endpoint
+   * @rpcParamLayoutConfig decorated method parameter layout
+   *
+   * @param {RequestDetails} requestDetails - Details about the request for logging and tracking
+   * @returns {JsonRpcError} An error indicating the method is not supported
+   */
+  @rpcMethod
+  @rpcParamLayoutConfig(RPC_LAYOUT.REQUEST_DETAILS_ONLY)
+  createAccessList(requestDetails: RequestDetails): JsonRpcError {
+    if (this.logger.isLevelEnabled('trace')) {
+      this.logger.trace(`${requestDetails.formattedRequestId} createAccessList()`);
     }
     return predefined.UNSUPPORTED_METHOD;
   }
