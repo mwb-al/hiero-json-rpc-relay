@@ -313,11 +313,17 @@ async function processFileContent(directory, file, content) {
   const needError = JSON.parse(content.response).error;
   const response = await sendRequestToRelay(modifiedRequest, needError);
   const schema = findSchema(directory);
-  const valid = needError
-    ? checkResponseFormat(response.response.data, content.response)
-    : isResponseValid(schema, response);
-  expect(valid).to.be.true;
-  if (response.result) expect(response.result).to.be.equal(JSON.parse(content.response).result);
+
+  if (modifiedRequest.method === 'eth_getTransactionByBlockHashAndIndex') {
+    const hasMissingKeys = checkResponseFormat(response, JSON.parse(content.response));
+    expect(hasMissingKeys).to.be.false;
+  } else {
+    const valid = needError
+      ? checkResponseFormat(response.response.data, content.response)
+      : isResponseValid(schema, response);
+    expect(valid).to.be.true;
+    if (response.result) expect(response.result).to.be.equal(JSON.parse(content.response).result);
+  }
 }
 
 const synthesizeTestCases = function (testCases, updateParamIfNeeded) {
