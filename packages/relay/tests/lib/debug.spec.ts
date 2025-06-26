@@ -34,7 +34,6 @@ let restMock: MockAdapter;
 let web3Mock: MockAdapter;
 let mirrorNodeInstance: MirrorNodeClient;
 let debugService: DebugImpl;
-let hapiServiceInstance: HAPIService;
 
 describe('Debug API Test Suite', async function () {
   this.timeout(10000);
@@ -50,6 +49,8 @@ describe('Debug API Test Suite', async function () {
   const tracerConfigFalse = { onlyTopCall: false };
   const callTracer: TracerType = TracerType.CallTracer;
   const opcodeLogger: TracerType = TracerType.OpcodeLogger;
+  const tracerObjectCallTracerFalse = { tracer: callTracer, tracerConfig: tracerConfigFalse };
+  const tracerObjectCallTracerTrue = { tracer: callTracer, tracerConfig: tracerConfigTrue };
   const CONTRACTS_RESULTS_OPCODES = `contracts/results/${transactionHash}/opcodes`;
   const CONTARCTS_RESULTS_ACTIONS = `contracts/results/${transactionHash}/actions`;
   const CONTRACTS_RESULTS_BY_HASH = `contracts/results/${transactionHash}`;
@@ -59,7 +60,6 @@ describe('Debug API Test Suite', async function () {
   const CONTRACT_BY_ADDRESS2 = `contracts/${contractAddress2}`;
   const CONTRACTS_RESULTS_BY_NON_EXISTENT_HASH = `contracts/results/${nonExistentTransactionHash}`;
   const CONTRACT_RESULTS_BY_ACTIONS_NON_EXISTENT_HASH = `contracts/results/${nonExistentTransactionHash}/actions`;
-  const BLOCKS_ENDPOINT = 'blocks';
 
   const opcodeLoggerConfigs = [
     {
@@ -274,7 +274,7 @@ describe('Debug API Test Suite', async function () {
       register,
       duration,
     );
-    hapiServiceInstance = new HAPIService(logger, registry, eventEmitter, hbarLimitService);
+    new HAPIService(logger, registry, eventEmitter, hbarLimitService);
 
     restMock = new MockAdapter(mirrorNodeInstance.getMirrorNodeRestInstance(), { onNoMatch: 'throwException' });
 
@@ -362,8 +362,7 @@ describe('Debug API Test Suite', async function () {
       it('should successfully debug a transaction', async function () {
         const traceTransaction = await debugService.traceTransaction(
           transactionHash,
-          callTracer,
-          tracerConfigFalse,
+          tracerObjectCallTracerFalse,
           requestDetails,
         );
         expect(traceTransaction).to.exist;
@@ -396,8 +395,7 @@ describe('Debug API Test Suite', async function () {
 
           const result = await debugService.traceTransaction(
             transactionHash,
-            callTracer,
-            tracerConfigFalse,
+            tracerObjectCallTracerFalse,
             requestDetails,
           );
 
@@ -418,8 +416,7 @@ describe('Debug API Test Suite', async function () {
           };
           const result = await debugService.traceTransaction(
             transactionHash,
-            callTracer,
-            tracerConfigTrue,
+            tracerObjectCallTracerTrue,
             requestDetails,
           );
 
@@ -431,8 +428,7 @@ describe('Debug API Test Suite', async function () {
 
           const result = await debugService.traceTransaction(
             transactionHash,
-            callTracer,
-            tracerConfigFalse,
+            tracerObjectCallTracerFalse,
             requestDetails,
           );
 
@@ -441,6 +437,18 @@ describe('Debug API Test Suite', async function () {
       });
 
       describe('opcodeLogger', async function () {
+        withOverriddenEnvsInMochaTest({ OPCODELOGGER_ENABLED: false }, () => {
+          it('should throw UNSUPPORTED_METHOD', async function () {
+            await RelayAssertions.assertRejection(
+              predefined.UNSUPPORTED_METHOD,
+              debugService.traceTransaction,
+              true,
+              debugService,
+              [transactionHash, callTracer, tracerConfigFalse, requestDetails],
+            );
+          });
+        });
+
         for (const config of opcodeLoggerConfigs) {
           const opcodeLoggerParams = Object.keys(config)
             .map((key) => `${key}=${config[key]}`)
@@ -472,7 +480,8 @@ describe('Debug API Test Suite', async function () {
                 })),
               };
 
-              const result = await debugService.traceTransaction(transactionHash, opcodeLogger, config, requestDetails);
+              const tracerObject = { tracer: opcodeLogger, tracerConfig: config };
+              const result = await debugService.traceTransaction(transactionHash, tracerObject, requestDetails);
 
               expect(result).to.deep.equal(expectedResult);
             });
@@ -508,8 +517,7 @@ describe('Debug API Test Suite', async function () {
 
           await RelayAssertions.assertRejection(expectedError, debugService.traceTransaction, true, debugService, [
             nonExistentTransactionHash,
-            callTracer,
-            tracerConfigTrue,
+            tracerObjectCallTracerTrue,
             requestDetails,
           ]);
         });
