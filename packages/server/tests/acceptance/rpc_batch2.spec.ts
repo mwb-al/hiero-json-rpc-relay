@@ -605,6 +605,20 @@ describe('@api-batch-2 RPC Server Acceptance Tests', function () {
       const manuallyCalculatedBalanceAtTx1Block = BigInt(initialBalance) + BigInt(ONE_TINYBAR);
       expect(BigInt(balanceAtTx1Block).toString()).to.eq(manuallyCalculatedBalanceAtTx1Block.toString());
     });
+
+    it('returns `Missing value for required parameter 1` when block argument is omitted', async () => {
+      const { error, result } = await relay.call('eth_getBalance', [Address.NON_EXISTING_ADDRESS]);
+      expect(result).to.be.undefined;
+      expect(error).to.exist;
+      expect(error.message).to.match(/Missing value for required parameter 1/i);
+    });
+
+    it('returns `Invalid parameter 1` when block argument is `null`', async () => {
+      const { error, result } = await relay.call('eth_getBalance', [Address.NON_EXISTING_ADDRESS, null]);
+      expect(result).to.be.undefined;
+      expect(error).to.exist;
+      expect(error.message).to.match(/Invalid parameter 1: The value passed is not valid: null\./i);
+    });
   });
 
   describe('@release Hardcoded RPC Endpoints', () => {
