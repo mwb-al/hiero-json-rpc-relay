@@ -593,6 +593,12 @@ const _CONFIG = {
     required: true,
     defaultValue: null,
   },
+  OPCODELOGGER_ENABLED: {
+    envName: 'OPCODELOGGER_ENABLED',
+    type: 'boolean',
+    required: false,
+    defaultValue: true,
+  },
   OPERATOR_ID_ETH_SENDRAWTRANSACTION: {
     envName: 'OPERATOR_ID_ETH_SENDRAWTRANSACTION',
     type: 'string',
@@ -634,6 +640,12 @@ const _CONFIG = {
     type: 'boolean',
     required: false,
     defaultValue: true,
+  },
+  IP_RATE_LIMIT_STORE: {
+    envName: 'IP_RATE_LIMIT_STORE',
+    type: 'string',
+    required: false,
+    defaultValue: null,
   },
   REDIS_RECONNECT_DELAY_MS: {
     envName: 'REDIS_RECONNECT_DELAY_MS',
