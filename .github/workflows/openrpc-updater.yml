@@ -66,14 +66,13 @@ jobs:
           node-version: '22'
 
       - name: Install dependencies
-        run: |
-          cd scripts/openrpc-json-updater
-          npm install
+        working-directory: scripts/openrpc-json-updater
+        run: npm install
 
       - name: Generate comparison report
         id: generate-report
+        working-directory: scripts/openrpc-json-updater
         run: |
-          cd scripts/openrpc-json-updater
           REPORT_OUTPUT=$(node cli.js)
           echo "REPORT_OUTPUT<<EOF" >> $GITHUB_ENV
           echo "$REPORT_OUTPUT" >> $GITHUB_ENV
@@ -85,8 +84,8 @@ jobs:
       # This provides a safety mechanism for tracking OpenRPC specification changes over time.
       - name: Perform merge
         id: merge
+        working-directory: scripts/openrpc-json-updater
         run: |
-          cd scripts/openrpc-json-updater
           MERGE_OUTPUT=$(node cli.js --merge)
           MERGE_EXIT_CODE=$?
           echo "$MERGE_OUTPUT"
