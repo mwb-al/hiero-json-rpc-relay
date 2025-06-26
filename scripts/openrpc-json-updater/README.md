@@ -2,6 +2,13 @@
 
 A command-line tool for comparing and merging OpenRPC JSON specifications.
 
+## OpenRPC Files Explanation
+
+The ethereum/execution-apis repository contains two OpenRPC JSON files:
+
+- **openrpc.json**: The standard OpenRPC specification with external references. Used for conformity testing.
+- **refs-openrpc.json**: The same specification but with all references resolved inline. Used for updating our local OpenRPC specification.
+
 ## GitHub Actions Integration
 
 This tool is used with the `openrpc-updater.yml` workflow that automatically:
