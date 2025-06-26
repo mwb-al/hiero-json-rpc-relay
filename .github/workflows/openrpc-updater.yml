@@ -73,7 +73,7 @@ jobs:
         id: generate-report
         working-directory: scripts/openrpc-json-updater
         run: |
-          REPORT_OUTPUT=$(node cli.js)
+          REPORT_OUTPUT=$(node cli.js --original ./original-openrpc.json --modified ../../docs/openrpc.json)
           echo "REPORT_OUTPUT<<EOF" >> $GITHUB_ENV
           echo "$REPORT_OUTPUT" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
@@ -86,7 +86,7 @@ jobs:
         id: merge
         working-directory: scripts/openrpc-json-updater
         run: |
-          MERGE_OUTPUT=$(node cli.js --merge)
+          MERGE_OUTPUT=$(node cli.js --merge --original ./original-openrpc.json --modified ../../docs/openrpc.json)
           MERGE_EXIT_CODE=$?
           echo "$MERGE_OUTPUT"
 
@@ -124,9 +124,9 @@ jobs:
           title: 'Update OpenRPC JSON'
           body: |
             # OpenRPC JSON Update
-            
+
             This PR updates the OpenRPC JSON file with the latest changes.
-            
+
             ## Comparison Report
             ```
             ${{ env.REPORT_OUTPUT }}

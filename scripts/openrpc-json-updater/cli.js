@@ -5,15 +5,16 @@ import { compareIgnoringFormatting, prepareDocuments } from './operations/prepar
 import { generateReport } from './operations/report.js';
 import { readJson, writeJson } from './utils/file.utils.js';
 
-const originalFilePath = './original-openrpc.json';
-const modifiedFilePath = '../../docs/openrpc.json';
-
-const { data: originalJson } = readJson(originalFilePath);
-const { data: modifiedJson, originalContent: modifiedContent } = readJson(modifiedFilePath);
+const DEFAULT_ORIGINAL_FILE_PATH = './original-openrpc.json';
+const DEFAULT_MODIFIED_FILE_PATH = '../../docs/openrpc.json';
 
 function parseArgs() {
   const argv = process.argv.slice(2);
-  const result = { mergeFlag: false };
+  const result = {
+    mergeFlag: false,
+    originalFilePath: DEFAULT_ORIGINAL_FILE_PATH,
+    modifiedFilePath: DEFAULT_MODIFIED_FILE_PATH,
+  };
 
   for (let i = 0; i < argv.length; i++) {
     switch (argv[i]) {
@@ -21,10 +22,27 @@ function parseArgs() {
       case '--merge':
         result.mergeFlag = true;
         break;
+      case '-o':
+      case '--original':
+        if (i + 1 < argv.length) {
+          result.originalFilePath = argv[++i];
+        }
+        break;
+      case '-m':
+      case '--modified':
+        if (i + 1 < argv.length) {
+          result.modifiedFilePath = argv[++i];
+        }
+        break;
     }
   }
   return result;
 }
+
+const { mergeFlag, originalFilePath, modifiedFilePath } = parseArgs();
+
+const { data: originalJson } = readJson(originalFilePath);
+const { data: modifiedJson, originalContent: modifiedContent } = readJson(modifiedFilePath);
 
 function hasDifferences(original, merged) {
   const differences = compareIgnoringFormatting(original, merged);
@@ -32,8 +50,6 @@ function hasDifferences(original, merged) {
 }
 
 (async () => {
-  const { mergeFlag } = parseArgs();
-
   const { normalizedOriginal, normalizedModified } = prepareDocuments(originalJson, modifiedJson);
 
   if (mergeFlag) {
