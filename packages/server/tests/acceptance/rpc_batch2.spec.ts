@@ -606,18 +606,28 @@ describe('@api-batch-2 RPC Server Acceptance Tests', function () {
       expect(BigInt(balanceAtTx1Block).toString()).to.eq(manuallyCalculatedBalanceAtTx1Block.toString());
     });
 
-    it('returns `Missing value for required parameter 1` when block argument is omitted', async () => {
-      const { error, result } = await relay.call('eth_getBalance', [Address.NON_EXISTING_ADDRESS]);
-      expect(result).to.be.undefined;
-      expect(error).to.exist;
-      expect(error.message).to.match(/Missing value for required parameter 1/i);
+    it('should return error when the second parameter is missing in eth_getBalance', async function () {
+      const result = await relay.call(
+        RelayCalls.ETH_ENDPOINTS.ETH_GET_BALANCE,
+        [Address.NON_EXISTING_ADDRESS],
+        Utils.formatRequestIdMessage(requestId),
+      );
+
+      expect(result).to.have.property('error');
+      expect(result.error).to.have.property('message').to.include('Missing value for required parameter');
     });
 
-    it('returns `Invalid parameter 1` when block argument is `null`', async () => {
-      const { error, result } = await relay.call('eth_getBalance', [Address.NON_EXISTING_ADDRESS, null]);
-      expect(result).to.be.undefined;
-      expect(error).to.exist;
-      expect(error.message).to.match(/Invalid parameter 1: The value passed is not valid: null\./i);
+    it('should return error when null is provided as the second parameter in eth_getBalance', async function () {
+      const result = await relay.call(
+        RelayCalls.ETH_ENDPOINTS.ETH_GET_BALANCE,
+        [Address.NON_EXISTING_ADDRESS, null],
+        Utils.formatRequestIdMessage(requestId),
+      );
+
+      expect(result).to.have.property('error');
+      expect(result.error)
+        .to.have.property('message')
+        .to.include('Invalid parameter 1: The value passed is not valid: null.');
     });
   });
 
