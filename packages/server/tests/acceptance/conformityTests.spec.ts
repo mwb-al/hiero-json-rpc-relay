@@ -124,15 +124,40 @@ async function getLatestBlockHash() {
 
 function splitReqAndRes(content) {
   /**
-   * Splits a given input string into distinct segments representing the request and the response.
+   * Splits a given input string into distinct segments representing the request, the response, and optional wildcard fields.
    *
    * @param {string} content - The input string to be segmented.
-   * @returns {{ request: string, response: string }} - An object containing the separated request and response strings.
+   * @returns {{ request: string, response: string, wildcards: string[] }} - An object containing the separated request, response strings, and wildcard fields.
    */
-  const lines = content.split('\n');
-  const filteredLines = lines.filter((line) => line != '' && !line.startsWith('//')).map((line) => line.slice(3));
+  const lines = content
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+  const wildcards = [];
 
-  return { request: filteredLines[0], response: filteredLines[1] };
+  const requestLine = lines.find((line) => line.startsWith('>>'));
+  const responseLine = lines.find((line) => line.startsWith('<<'));
+  const wildcardLine = lines.find((line) => line.startsWith('## wildcard:'));
+
+  if (wildcardLine) {
+    wildcards.push(
+      ...wildcardLine
+        .replace('## wildcard:', '')
+        .trim()
+        .split(',')
+        .map((field) => field.trim()),
+    );
+  }
+
+  if (!requestLine || !responseLine) {
+    throw new Error('Missing or improperly formatted request/response lines');
+  }
+
+  return {
+    request: requestLine.slice(2).trim(),
+    response: responseLine.slice(2).trim(),
+    wildcards,
+  };
 }
 
 async function sendRequestToRelay(request, needError) {
@@ -216,15 +241,61 @@ async function checkRequestBody(fileName, request) {
   return request;
 }
 
-function checkResponseFormat(actualReponse, expectedResponse) {
-  const actualResponseKeys = extractKeys(actualReponse);
+function checkResponseFormat(actualResponse, expectedResponse, wildcards = []) {
+  const actualResponseKeys = extractKeys(actualResponse);
   const expectedResponseKeys = extractKeys(expectedResponse);
   const missingKeys = expectedResponseKeys.filter((key) => !actualResponseKeys.includes(key));
   if (missingKeys.length > 0) {
     return true;
-  } else {
+  }
+
+  return checkValues(actualResponse, expectedResponse, wildcards);
+}
+
+function checkValues(actual, expected, wildcards, path = '') {
+  if (expected === null || expected === undefined) {
+    return actual !== null && actual !== undefined;
+  }
+
+  if (typeof actual !== typeof expected) {
+    return true;
+  }
+
+  if (typeof expected !== 'object') {
+    return actual !== expected;
+  }
+
+  if (Array.isArray(expected)) {
+    if (!Array.isArray(actual) || actual.length !== expected.length) {
+      return true;
+    }
+
+    for (let i = 0; i < expected.length; i++) {
+      if (checkValues(actual[i], expected[i], wildcards, `${path}[${i}]`)) {
+        return true;
+      }
+    }
+
     return false;
   }
+
+  for (const key in expected) {
+    const newPath = path ? `${path}.${key}` : key;
+
+    if (wildcards.includes(newPath)) {
+      continue;
+    }
+
+    if (!(key in actual)) {
+      return true;
+    }
+
+    if (checkValues(actual[key], expected[key], wildcards, newPath)) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 const findSchema = function (file) {
@@ -314,15 +385,20 @@ async function processFileContent(directory, file, content) {
   const response = await sendRequestToRelay(modifiedRequest, needError);
   const schema = findSchema(directory);
 
-  if (modifiedRequest.method === 'eth_getTransactionByBlockHashAndIndex') {
-    const hasMissingKeys = checkResponseFormat(response, JSON.parse(content.response));
-    expect(hasMissingKeys).to.be.false;
+  const wildcards = content.wildcards || [];
+
+  if (needError) {
+    const valid = checkResponseFormat(response.response.data, content.response, wildcards);
+    expect(valid).to.be.false;
   } else {
-    const valid = needError
-      ? checkResponseFormat(response.response.data, content.response)
-      : isResponseValid(schema, response);
-    expect(valid).to.be.true;
-    if (response.result) expect(response.result).to.be.equal(JSON.parse(content.response).result);
+    if (schema && wildcards.length === 0) {
+      const valid = isResponseValid(schema, response);
+      expect(valid).to.be.true;
+      if (response.result) expect(response.result).to.be.equal(JSON.parse(content.response).result);
+    } else {
+      const hasMissingKeys = checkResponseFormat(response, JSON.parse(content.response), wildcards);
+      expect(hasMissingKeys).to.be.false;
+    }
   }
 }
 
