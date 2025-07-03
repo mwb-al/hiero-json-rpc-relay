@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 import Ajv from 'ajv';
+import addFormats from 'ajv-formats';
 import { expect } from 'chai';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const execApisOpenRpcData = require('../../../../../../../openrpc_exec_apis.json');
 
 const ajv = new Ajv({ strict: false });
+addFormats(ajv);
 
 export function checkResponseFormat(actualResponse: any, expectedResponse: any, wildcards = []) {
   let parsedExpectedResponse = expectedResponse;
