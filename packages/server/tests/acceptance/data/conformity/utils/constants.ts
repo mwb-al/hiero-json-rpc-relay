@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: Apache-2.0
-
 import { ConfigService } from '@hashgraph/json-rpc-config-service/dist/services';
 
 export const ACCESS_LIST_FILE_NAME = 'get-access-list.io';

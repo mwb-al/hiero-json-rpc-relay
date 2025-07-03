@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: Apache-2.0
-
 import { bytecode } from '../../../../contracts/Basic.json';
 import { chainId, gasLimit, gasPrice, receiveAccountAddress, sendAccountAddress, value } from './constants';
 

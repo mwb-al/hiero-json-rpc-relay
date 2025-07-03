@@ -43,39 +43,46 @@ export function checkResponseFormat(actualResponse: any, expectedResponse: any, 
   return checkValues(actualResponse, parsedExpectedResponse, wildcards);
 }
 
-function checkValues(actual: any, expected: any, wildcards: any, path = '') {
-  if (path === '' && expected && typeof expected === 'object' && expected.error) {
-    if (!actual || typeof actual !== 'object' || !actual.error) {
-      return true;
-    }
-    const requiredErrorKeys = Object.keys(expected.error);
-    for (const key of requiredErrorKeys) {
-      if (!(key in actual.error)) {
-        return true;
-      }
-    }
-    return false;
-  }
-  if (expected === null || expected === undefined) {
-    return actual !== null && actual !== undefined;
-  }
-  if (typeof actual !== typeof expected) {
+/**
+ * Checks if the actual response has the required error properties
+ */
+function checkErrorResponse(actual: any, expected: any): boolean {
+  if (!actual || typeof actual !== 'object' || !actual.error) {
     return true;
   }
-  if (typeof expected !== 'object') {
-    return actual !== expected;
-  }
-  if (Array.isArray(expected)) {
-    if (!Array.isArray(actual) || actual.length !== expected.length) {
+  const requiredErrorKeys = Object.keys(expected.error);
+  for (const key of requiredErrorKeys) {
+    if (!(key in actual.error)) {
       return true;
     }
-    for (let i = 0; i < expected.length; i++) {
-      if (checkValues(actual[i], expected[i], wildcards, `${path}[${i}]`)) {
-        return true;
-      }
-    }
-    return false;
   }
+  return false;
+}
+
+function arePrimitivesDifferent(actual: any, expected: any): boolean {
+  return actual !== expected;
+}
+
+/**
+ * Checks if two arrays have different values
+ */
+function checkArrayValues(actual: any[], expected: any[], wildcards: any, path: string): boolean {
+  if (actual.length !== expected.length) {
+    return true;
+  }
+
+  for (let i = 0; i < expected.length; i++) {
+    if (checkValues(actual[i], expected[i], wildcards, `${path}[${i}]`)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Checks if an object has all the required properties with matching values
+ */
+function checkObjectProperties(actual: any, expected: any, wildcards: any, path: string): boolean {
   for (const key in expected) {
     const newPath = path ? `${path}.${key}` : key;
     if (wildcards.includes(newPath)) {
@@ -89,6 +96,33 @@ function checkValues(actual: any, expected: any, wildcards: any, path = '') {
     }
   }
   return false;
+}
+
+function checkValues(actual: any, expected: any, wildcards: any, path = '') {
+  if (path === '' && expected && typeof expected === 'object' && expected.error) {
+    return checkErrorResponse(actual, expected);
+  }
+
+  if (expected === null || expected === undefined) {
+    return actual !== null && actual !== undefined;
+  }
+
+  if (typeof actual !== typeof expected) {
+    return true;
+  }
+
+  if (typeof expected !== 'object') {
+    return arePrimitivesDifferent(actual, expected);
+  }
+
+  if (Array.isArray(expected)) {
+    if (!Array.isArray(actual)) {
+      return true;
+    }
+    return checkArrayValues(actual, expected, wildcards, path);
+  }
+
+  return checkObjectProperties(actual, expected, wildcards, path);
 }
 
 export const findSchema = function (file: any) {
