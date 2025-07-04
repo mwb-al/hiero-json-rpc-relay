@@ -5,7 +5,7 @@ import { checkRequestBody } from './overwrites';
 import { sendRequestToRelay } from './utils';
 import { checkResponseFormat, findSchema, isResponseValid } from './validations';
 
-export function splitReqAndRes(content: any) {
+export function splitReqAndRes(content: string) {
   /**
    * Splits a given input string into distinct segments representing the request, the response, and optional wildcard fields.
    *

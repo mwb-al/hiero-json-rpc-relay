@@ -9,7 +9,7 @@ const execApisOpenRpcData = require('../../../../../../../openrpc_exec_apis.json
 const ajv = new Ajv({ strict: false });
 addFormats(ajv);
 
-export function checkResponseFormat(actualResponse: any, expectedResponse: any, wildcards = []) {
+export function checkResponseFormat(actualResponse: any, expectedResponse: any, wildcards: string[] = []) {
   let parsedExpectedResponse = expectedResponse;
   if (typeof expectedResponse === 'string') {
     try {
@@ -34,7 +34,9 @@ export function checkResponseFormat(actualResponse: any, expectedResponse: any, 
 
   const actualResponseKeys = extractKeys(actualResponse);
   const expectedResponseKeys = extractKeys(parsedExpectedResponse);
-  const missingKeys = expectedResponseKeys.filter((key) => !actualResponseKeys.includes(key));
+  const filteredExpectedKeys = expectedResponseKeys.filter((key) => !wildcards.includes(key));
+  const missingKeys = filteredExpectedKeys.filter((key) => !actualResponseKeys.includes(key));
+
   if (missingKeys.length > 0) {
     console.log(`Missing keys in response: ${JSON.stringify(missingKeys)}`);
     return true;
@@ -66,7 +68,7 @@ function arePrimitivesDifferent(actual: any, expected: any): boolean {
 /**
  * Checks if two arrays have different values
  */
-function checkArrayValues(actual: any[], expected: any[], wildcards: any, path: string): boolean {
+function checkArrayValues(actual: any[], expected: any[], wildcards: string[], path: string): boolean {
   if (actual.length !== expected.length) {
     return true;
   }
@@ -82,7 +84,7 @@ function checkArrayValues(actual: any[], expected: any[], wildcards: any, path: 
 /**
  * Checks if an object has all the required properties with matching values
  */
-function checkObjectProperties(actual: any, expected: any, wildcards: any, path: string): boolean {
+function checkObjectProperties(actual: any, expected: any, wildcards: string[], path: string): boolean {
   for (const key in expected) {
     const newPath = path ? `${path}.${key}` : key;
     if (wildcards.includes(newPath)) {
@@ -98,7 +100,7 @@ function checkObjectProperties(actual: any, expected: any, wildcards: any, path:
   return false;
 }
 
-function checkValues(actual: any, expected: any, wildcards: any, path = '') {
+function checkValues(actual: any, expected: any, wildcards: string[], path = '') {
   if (path === '' && expected && typeof expected === 'object' && expected.error) {
     return checkErrorResponse(actual, expected);
   }
