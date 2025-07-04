@@ -1,15 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 import { ConfigService } from '@hashgraph/json-rpc-config-service/dist/services';
 
-export const ACCESS_LIST_FILE_NAME = 'get-access-list.io';
-export const DYNAMIC_FEE_FILE_NAME = 'get-dynamic-fee.io';
-export const EMPTY_TX_FILE_NAME = 'get-empty-tx.io';
-export const LEGACY_CREATE_FILE_NAME = 'get-legacy-create.io';
-export const LEGACY_INPUT_FILE_NAME = 'get-legacy-input.io';
-export const LEGACY_CONTRACT_FILE_NAME = 'get-legacy-contract.io';
-export const LEGACY_TX_FILE_NAME = 'get-legacy-tx.io';
-export const LEGACY_RECEIPT_FILE_NAME = 'get-legacy-receipt.io';
-export const NOT_FOUND_TX_FILE_NAME = 'get-notfound-tx.io';
+export const RELAY_URL = 'http://127.0.0.1:7546';
+export const WS_RELAY_URL = 'ws://127.0.0.1:8546';
+export const chainId = Number(ConfigService.get('CHAIN_ID'));
 
 export const sendAccountAddress = '0xc37f417fA09933335240FCA72DD257BFBdE9C275';
 export const receiveAccountAddress = '0x67D8d32E9Bf1a9968a5ff53B87d777Aa8EBBEe69';
@@ -23,13 +17,13 @@ export const ETHEREUM_NETWORK_SIGNED_TRANSACTION =
 export const ETHEREUM_NETWORK_ACCOUNT_HASH = '0x5C41A21F14cFe9808cBEc1d91b55Ba75ed327Eb6';
 export const EMPTY_TX_HASH = '0x0000000000000000000000000000000000000000000000000000000000000000';
 export const NONEXISTENT_TX_HASH = '0x00000000000000000000000000000000000000000000000000000000deadbeef';
-export const chainId = Number(ConfigService.get('CHAIN_ID'));
 
 export let currentBlockHash: any;
 export let legacyTransactionAndBlockHash: any;
 export let transaction2930AndBlockHash: any;
 export let transaction1559AndBlockHash: any;
 export let createContractLegacyTransactionAndBlockHash: any;
+export let transaction1559_2930AndBlockHash: any;
 
 export function setCurrentBlockHash(value: any) {
   currentBlockHash = value;
@@ -45,6 +39,10 @@ export function setTransaction2930AndBlockHash(value: any) {
 
 export function setTransaction1559AndBlockHash(value: any) {
   transaction1559AndBlockHash = value;
+}
+
+export function setTransaction1559_2930AndBlockHash(value: any) {
+  transaction1559_2930AndBlockHash = value;
 }
 
 export function setCreateContractLegacyTransactionAndBlockHash(value: any) {

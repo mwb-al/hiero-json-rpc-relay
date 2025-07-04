@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { expect } from 'chai';
 
-import { checkRequestBody } from './overwrites';
+import { updateRequestParams } from './overwrites';
 import { sendRequestToRelay } from './utils';
 import { checkResponseFormat, findSchema, isResponseValid } from './validations';
 
@@ -54,7 +54,7 @@ export async function processFileContent(relayUrl: string, directory: any, file:
    */
   console.log('Executing for ', file);
   console.log('Original request:', content.request);
-  const modifiedRequest = await checkRequestBody(relayUrl, file, JSON.parse(content.request));
+  const modifiedRequest = await updateRequestParams(file, JSON.parse(content.request));
   console.log('Modified request:', JSON.stringify(modifiedRequest));
 
   const needError = JSON.parse(content.response).error;

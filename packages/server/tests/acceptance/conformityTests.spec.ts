@@ -13,18 +13,22 @@ import {
   chainId,
   gasLimit,
   gasPrice,
+  RELAY_URL,
   sendAccountAddress,
   setCreateContractLegacyTransactionAndBlockHash,
   setCurrentBlockHash,
   setLegacyTransactionAndBlockHash,
+  setTransaction1559_2930AndBlockHash,
   setTransaction1559AndBlockHash,
   setTransaction2930AndBlockHash,
+  WS_RELAY_URL,
 } from './data/conformity/utils/constants';
 import { processFileContent, splitReqAndRes } from './data/conformity/utils/processors';
 import {
   createContractLegacyTransaction,
   legacyTransaction,
   transaction1559,
+  transaction1559_2930,
   transaction2930,
 } from './data/conformity/utils/transactions';
 import { getLatestBlockHash, sendRequestToRelay, signAndSendRawTransaction } from './data/conformity/utils/utils';
@@ -32,8 +36,6 @@ import { checkResponseFormat, isResponseValid } from './data/conformity/utils/va
 
 const directoryPath = path.resolve(__dirname, '../../../../node_modules/execution-apis/tests');
 const overwritesDirectoryPath = path.resolve(__dirname, 'data/conformity/overwrites');
-const relayUrl = 'http://127.0.0.1:7546';
-const wsRelayUrl = 'ws://127.0.0.1:8546';
 
 let relayOpenRpcData: any;
 (async () => {
@@ -49,7 +51,7 @@ const synthesizeTestCases = function (testCases: any, updateParamIfNeeded: any) 
       const schema = relayOpenRpcData.methods.find((method: any) => method.name === testName)?.result?.schema;
       try {
         const req = updateParamIfNeeded(testName, JSON.parse(testCases[testName].request));
-        const res = await sendRequestToRelay(relayUrl, req, false);
+        const res = await sendRequestToRelay(RELAY_URL, req, false);
         const hasMissingKeys: boolean = checkResponseFormat(res, JSON.parse(testCases[testName].response));
 
         if (schema && schema.pattern) {
@@ -85,7 +87,7 @@ const initGenesisData = async function () {
     options['to'] = data.account ? data.account : null;
     if (data.balance) options['value'] = `0x${data.balance.toString(16)}`;
     if (data.bytecode) options['data'] = data.bytecode;
-    await signAndSendRawTransaction(relayUrl, { chainId, from: sendAccountAddress, type: 2, ...options });
+    await signAndSendRawTransaction(RELAY_URL, { chainId, from: sendAccountAddress, type: 2, ...options });
   }
 };
 
@@ -93,14 +95,15 @@ describe('@api-conformity', async function () {
   describe('@conformity-batch-1 Ethereum execution apis tests', function () {
     this.timeout(240 * 1000);
     before(async () => {
-      setLegacyTransactionAndBlockHash(await signAndSendRawTransaction(relayUrl, legacyTransaction));
-      setTransaction2930AndBlockHash(await signAndSendRawTransaction(relayUrl, transaction2930));
-      setTransaction1559AndBlockHash(await signAndSendRawTransaction(relayUrl, transaction1559));
+      setLegacyTransactionAndBlockHash(await signAndSendRawTransaction(RELAY_URL, legacyTransaction));
+      setTransaction2930AndBlockHash(await signAndSendRawTransaction(RELAY_URL, transaction2930));
+      setTransaction1559AndBlockHash(await signAndSendRawTransaction(RELAY_URL, transaction1559));
+      setTransaction1559_2930AndBlockHash(await signAndSendRawTransaction(RELAY_URL, transaction1559_2930));
       setCreateContractLegacyTransactionAndBlockHash(
-        await signAndSendRawTransaction(relayUrl, createContractLegacyTransaction),
+        await signAndSendRawTransaction(RELAY_URL, createContractLegacyTransaction),
       );
       await initGenesisData();
-      setCurrentBlockHash(await getLatestBlockHash(relayUrl));
+      setCurrentBlockHash(await getLatestBlockHash(RELAY_URL));
     });
     //Reading the directories within the ethereum execution api repo
     //Adds tests for custom Hedera methods from the override directory to the list, even if they're not in the OpenRPC spec.
@@ -120,7 +123,7 @@ describe('@api-conformity', async function () {
           const dir = isCustom ? overwritesDirectoryPath : directoryPath;
           const data = fs.readFileSync(path.resolve(dir, directory, file));
           const content = splitReqAndRes(data.toString('utf-8'));
-          await processFileContent(relayUrl, directory, file, content);
+          await processFileContent(RELAY_URL, directory, file, content);
         });
       }
     }
@@ -135,7 +138,7 @@ describe('@api-conformity', async function () {
     before(async () => {
       existingBlockFilter = (
         await sendRequestToRelay(
-          relayUrl,
+          RELAY_URL,
           {
             jsonrpc: '2.0',
             method: 'eth_newBlockFilter',
@@ -146,7 +149,7 @@ describe('@api-conformity', async function () {
         )
       ).result;
 
-      const deployLogsContractTx = await signAndSendRawTransaction(relayUrl, {
+      const deployLogsContractTx = await signAndSendRawTransaction(RELAY_URL, {
         chainId,
         to: null,
         from: sendAccountAddress,
@@ -159,7 +162,7 @@ describe('@api-conformity', async function () {
 
       existingContractFilter = (
         await sendRequestToRelay(
-          relayUrl,
+          RELAY_URL,
           {
             jsonrpc: '2.0',
             method: 'eth_newFilter',
@@ -202,7 +205,7 @@ describe('@api-conformity', async function () {
     let txHash: any;
 
     before(async () => {
-      txHash = (await signAndSendRawTransaction(relayUrl, transaction1559)).transactionHash;
+      txHash = (await signAndSendRawTransaction(RELAY_URL, transaction1559)).transactionHash;
     });
 
     // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -235,7 +238,7 @@ describe('@api-conformity', async function () {
 
       before(async () => {
         contractAddress = (
-          await signAndSendRawTransaction(relayUrl, {
+          await signAndSendRawTransaction(RELAY_URL, {
             chainId,
             to: null,
             from: sendAccountAddress,
@@ -249,7 +252,7 @@ describe('@api-conformity', async function () {
 
         existingFilter = (
           await sendRequestToRelay(
-            relayUrl,
+            RELAY_URL,
             {
               jsonrpc: '2.0',
               method: 'eth_newFilter',
@@ -268,7 +271,7 @@ describe('@api-conformity', async function () {
       });
 
       beforeEach(() => {
-        webSocket = new WebSocket(wsRelayUrl);
+        webSocket = new WebSocket(WS_RELAY_URL);
       });
 
       afterEach(() => {
@@ -325,7 +328,7 @@ describe('@api-conformity', async function () {
     let fromBlockForLogs: string;
 
     before(async () => {
-      const deployCallerContractTx = await signAndSendRawTransaction(relayUrl, {
+      const deployCallerContractTx = await signAndSendRawTransaction(RELAY_URL, {
         chainId: 0x12a,
         to: null,
         from: sendAccountAddress,
@@ -336,7 +339,7 @@ describe('@api-conformity', async function () {
         data: CallerContract.bytecode,
       });
 
-      const deployLogsContractTx = await signAndSendRawTransaction(relayUrl, {
+      const deployLogsContractTx = await signAndSendRawTransaction(RELAY_URL, {
         chainId: 0x12a,
         to: null,
         from: sendAccountAddress,
@@ -350,7 +353,7 @@ describe('@api-conformity', async function () {
       existingCallerContractAddress = deployCallerContractTx.contractAddress;
       existingLogsContractAddress = deployLogsContractTx.contractAddress;
 
-      const log0ContractCall = await signAndSendRawTransaction(relayUrl, {
+      const log0ContractCall = await signAndSendRawTransaction(RELAY_URL, {
         chainId: 0x12a,
         to: existingLogsContractAddress,
         from: sendAccountAddress,

@@ -19,7 +19,8 @@ export const transaction2930 = {
   value,
   gasPrice,
   gasLimit: gasLimit,
-  type: 1,
+  type: 0x1,
+  accessList: [],
 };
 
 export const transaction1559 = {
@@ -31,7 +32,20 @@ export const transaction1559 = {
   maxPriorityFeePerGas: gasPrice,
   maxFeePerGas: gasPrice,
   gasLimit: gasLimit,
-  type: 2,
+  type: 0x2,
+};
+
+export const transaction1559_2930 = {
+  chainId,
+  to: receiveAccountAddress,
+  from: sendAccountAddress,
+  value,
+  gasPrice,
+  maxPriorityFeePerGas: gasPrice,
+  maxFeePerGas: gasPrice,
+  gasLimit: gasLimit,
+  type: 0x2,
+  accessList: [],
 };
 
 export const createContractLegacyTransaction = {
@@ -40,6 +54,6 @@ export const createContractLegacyTransaction = {
   from: sendAccountAddress,
   gasLimit: gasLimit,
   gasPrice: gasPrice,
-  type: 0,
+  type: 0x0,
   data: bytecode,
 };
