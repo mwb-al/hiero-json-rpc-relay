@@ -2,7 +2,7 @@
 import { bytecode } from '../../../../contracts/Basic.json';
 import { chainId, gasLimit, gasPrice, receiveAccountAddress, sendAccountAddress, value } from './constants';
 
-export const legacyTransaction: any = {
+export const legacyTransaction = {
   chainId,
   to: receiveAccountAddress,
   from: sendAccountAddress,

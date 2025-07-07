@@ -13,19 +13,23 @@ import {
   transaction1559AndBlockHash,
   transaction2930AndBlockHash,
 } from './constants';
+import { JsonRpcRequest, Transaction } from './interfaces';
 import { legacyTransaction, transaction1559, transaction1559_2930, transaction2930 } from './transactions';
 import { getTransactionCount } from './utils';
 
-export async function updateRequestParams(fileName: string, request: any) {
+export async function updateRequestParams<T = unknown>(
+  fileName: string,
+  request: JsonRpcRequest,
+): Promise<JsonRpcRequest> {
   const paramMappings = buildTransactionOverrides();
   const fullPath = `overwrites/${request.method}/${fileName}`;
 
   if (fullPath in paramMappings) {
     const mapping = paramMappings[fullPath];
     for (const [paramIndex, value] of Object.entries(mapping)) {
-      let resolvedValue = value;
+      let resolvedValue: T | string = value as T | string;
       if (typeof value === 'function') {
-        resolvedValue = await (value as () => Promise<any>)();
+        resolvedValue = await (value as () => Promise<T>)();
       }
       request.params[parseInt(paramIndex)] = resolvedValue;
     }
@@ -35,7 +39,7 @@ export async function updateRequestParams(fileName: string, request: any) {
 }
 
 function buildTransactionOverrides() {
-  async function prepareTransaction(transaction: any, privateKey: any) {
+  async function prepareTransaction(transaction: Transaction, privateKey: string) {
     const nonce = parseInt(await getTransactionCount(RELAY_URL), 16);
     const txToSign = { ...transaction, nonce };
     return await signTransaction(txToSign, privateKey);

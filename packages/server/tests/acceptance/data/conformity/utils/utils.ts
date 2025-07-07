@@ -3,6 +3,7 @@ import { signTransaction } from '@hashgraph/json-rpc-relay/tests/helpers';
 import axios from 'axios';
 
 import { localNodeAccountPrivateKey, sendAccountAddress } from './constants';
+import { JsonRpcRequest, JsonRpcResponse, Transaction, TransactionResponse } from './interfaces';
 
 export async function getTransactionCount(relayUrl: string) {
   const request = {
@@ -12,7 +13,7 @@ export async function getTransactionCount(relayUrl: string) {
     params: [sendAccountAddress, 'latest'],
   };
 
-  const response = await sendRequestToRelay(relayUrl, request, false);
+  const response = await sendRequestToRelay(relayUrl, request as JsonRpcRequest, false);
 
   return response.result;
 }
@@ -25,12 +26,16 @@ export async function getLatestBlockHash(relayUrl: string) {
     id: 0,
   };
 
-  const response = await sendRequestToRelay(relayUrl, request, false);
+  const response = await sendRequestToRelay(relayUrl, request as JsonRpcRequest, false);
 
   return response.result.hash;
 }
 
-export async function sendRequestToRelay(relayUrl: string, request: any, needError: any) {
+export async function sendRequestToRelay(
+  relayUrl: string,
+  request: JsonRpcRequest,
+  needError: boolean,
+): Promise<JsonRpcResponse> {
   try {
     const response = await axios.post(relayUrl, request);
     if (request.method === 'eth_sendRawTransaction') {
@@ -40,14 +45,24 @@ export async function sendRequestToRelay(relayUrl: string, request: any, needErr
   } catch (error) {
     console.error(error);
     if (needError) {
-      return error;
+      return {
+        jsonrpc: '2.0',
+        id: request.id,
+        error: {
+          code: -32603,
+          message: error instanceof Error ? error.message : 'An unknown error occurred',
+        },
+      } as JsonRpcResponse;
     } else {
       throw error;
     }
   }
 }
 
-export async function signAndSendRawTransaction(relayUrl: string, transaction: any) {
+export async function signAndSendRawTransaction(
+  relayUrl: string,
+  transaction: Transaction,
+): Promise<TransactionResponse> {
   transaction.nonce = parseInt(await getTransactionCount(relayUrl), 16);
   const signed = await signTransaction(transaction, localNodeAccountPrivateKey);
   const request = {
@@ -57,14 +72,14 @@ export async function signAndSendRawTransaction(relayUrl: string, transaction: a
     params: [signed],
   };
 
-  const response = await sendRequestToRelay(relayUrl, request, false);
+  const response = await sendRequestToRelay(relayUrl, request as JsonRpcRequest, false);
   const requestTransactionReceipt = {
     id: 'test_id',
     jsonrpc: '2.0',
     method: 'eth_getTransactionReceipt',
     params: [response.result],
   };
-  const transactionReceipt = await sendRequestToRelay(relayUrl, requestTransactionReceipt, false);
+  const transactionReceipt = await sendRequestToRelay(relayUrl, requestTransactionReceipt as JsonRpcRequest, false);
   return {
     transactionHash: response.result,
     blockHash: transactionReceipt.result.blockHash,

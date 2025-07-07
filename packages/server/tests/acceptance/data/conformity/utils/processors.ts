@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { expect } from 'chai';
 
+import { FileContent } from './interfaces';
 import { updateRequestParams } from './overwrites';
 import { sendRequestToRelay } from './utils';
 import { checkResponseFormat, findSchema, isResponseValid } from './validations';
@@ -14,13 +15,13 @@ export function splitReqAndRes(content: string) {
    */
   const lines = content
     .split('\n')
-    .map((line: any) => line.trim())
-    .filter((line: any) => line.length > 0);
-  const wildcards: string[] = []; // Add explicit type annotation here
+    .map((line: string) => line.trim())
+    .filter((line: string) => line.length > 0);
+  const wildcards: string[] = [];
 
-  const requestLine = lines.find((line: any) => line.startsWith('>>'));
-  const responseLine = lines.find((line: any) => line.startsWith('<<'));
-  const wildcardLine = lines.find((line: any) => line.startsWith('## wildcard:'));
+  const requestLine = lines.find((line: string) => line.startsWith('>>'));
+  const responseLine = lines.find((line: string) => line.startsWith('<<'));
+  const wildcardLine = lines.find((line: string) => line.startsWith('## wildcard:'));
 
   if (wildcardLine) {
     wildcards.push(
@@ -28,7 +29,7 @@ export function splitReqAndRes(content: string) {
         .replace('## wildcard:', '')
         .trim()
         .split(',')
-        .map((field: any) => field.trim()),
+        .map((field: string) => field.trim()),
     );
   }
 
@@ -43,7 +44,7 @@ export function splitReqAndRes(content: string) {
   };
 }
 
-export async function processFileContent(relayUrl: string, directory: any, file: any, content: any) {
+export async function processFileContent(relayUrl: string, directory: string, file: string, content: FileContent) {
   /**
    * Processes a file from the execution apis repo
    * containing test request and response data.
@@ -71,12 +72,7 @@ export async function processFileContent(relayUrl: string, directory: any, file:
 
   if (needError) {
     console.log('Validating an error response.');
-    const valid = checkResponseFormat(response.response.data, content.response, wildcards);
-    console.log(
-      `Inside processFileContent, valid: ${valid}, response: ${JSON.stringify(
-        response.response.data,
-      )}, content: ${JSON.stringify(content)}, wildcards: ${JSON.stringify(wildcards)}`,
-    );
+    const valid = checkResponseFormat(response, content.response, wildcards);
     expect(valid).to.be.false;
     console.log('Error response validation finished.');
   } else {

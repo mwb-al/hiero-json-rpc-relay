@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
+import { JSONSchemaObject, MethodObject, MethodOrReference, OpenrpcDocument } from '@open-rpc/meta-schema';
 import { parseOpenRPCDocument } from '@open-rpc/schema-utils-js';
 import { expect } from 'chai';
 import fs from 'fs';
@@ -23,6 +24,7 @@ import {
   setTransaction2930AndBlockHash,
   WS_RELAY_URL,
 } from './data/conformity/utils/constants';
+import { TestCases, UpdateParamFunction } from './data/conformity/utils/interfaces';
 import { processFileContent, splitReqAndRes } from './data/conformity/utils/processors';
 import {
   createContractLegacyTransaction,
@@ -37,18 +39,24 @@ import { checkResponseFormat, isResponseValid } from './data/conformity/utils/va
 const directoryPath = path.resolve(__dirname, '../../../../node_modules/execution-apis/tests');
 const overwritesDirectoryPath = path.resolve(__dirname, 'data/conformity/overwrites');
 
-let relayOpenRpcData: any;
+let relayOpenRpcData: OpenrpcDocument;
 (async () => {
   relayOpenRpcData = await parseOpenRPCDocument(JSON.stringify(openRpcData));
 })().catch((error) => console.error('Error parsing OpenRPC document:', error));
 
-const synthesizeTestCases = function (testCases: any, updateParamIfNeeded: any) {
+const synthesizeTestCases = function (testCases: TestCases, updateParamIfNeeded: UpdateParamFunction) {
   for (const testName in testCases) {
     it(`${testName}`, async function () {
       const isErrorStatusExpected: boolean =
         (testCases[testName]?.status && testCases[testName].status != 200) ||
         !!JSON.parse(testCases[testName].response).error;
-      const schema = relayOpenRpcData.methods.find((method: any) => method.name === testName)?.result?.schema;
+      const method = relayOpenRpcData.methods.find(
+        (m: MethodOrReference): m is MethodObject => 'name' in m && m.name === testName.split(' ')[0],
+      );
+      const schema: JSONSchemaObject | undefined =
+        method?.result && 'schema' in method.result && typeof method.result.schema === 'object'
+          ? method.result.schema
+          : undefined;
       try {
         const req = updateParamIfNeeded(testName, JSON.parse(testCases[testName].request));
         const res = await sendRequestToRelay(RELAY_URL, req, false);
@@ -233,7 +241,7 @@ describe('@api-conformity', async function () {
 
     describe('ws related rpc methods', async function () {
       let webSocket: WebSocket;
-      let contractAddress: string;
+      let contractAddress: string | null;
       let existingFilter: string;
 
       before(async () => {
@@ -323,8 +331,8 @@ describe('@api-conformity', async function () {
   describe('@conformity-batch-4 Ethereum execution apis tests', async function () {
     this.timeout(240 * 1000);
 
-    let existingCallerContractAddress: string;
-    let existingLogsContractAddress: string;
+    let existingCallerContractAddress: string | null;
+    let existingLogsContractAddress: string | null;
     let fromBlockForLogs: string;
 
     before(async () => {
@@ -364,7 +372,7 @@ describe('@api-conformity', async function () {
         data: '0xd05285d4000000000000000000000000000000000000000000000000000000000000160c',
       });
 
-      fromBlockForLogs = log0ContractCall.blockNumber;
+      fromBlockForLogs = String(log0ContractCall.blockNumber);
     });
 
     // eslint-disable-next-line @typescript-eslint/no-var-requires
