@@ -17,21 +17,34 @@ import { legacyTransaction, transaction1559, transaction1559_2930, transaction29
 import { getTransactionCount } from './utils';
 
 export async function updateRequestParams(fileName: string, request: any) {
-  const paramMappings = await buildTransactionOverrides();
+  const paramMappings = buildTransactionOverrides();
   const fullPath = `overwrites/${request.method}/${fileName}`;
 
   if (fullPath in paramMappings) {
     const mapping = paramMappings[fullPath];
-    Object.entries(mapping).forEach(([paramIndex, value]) => {
-      request.params[parseInt(paramIndex)] = value;
-    });
+    for (const [paramIndex, value] of Object.entries(mapping)) {
+      let resolvedValue = value;
+      if (typeof value === 'function') {
+        resolvedValue = await (value as () => Promise<any>)();
+      }
+      request.params[parseInt(paramIndex)] = resolvedValue;
+    }
   }
 
   return request;
 }
 
-async function buildTransactionOverrides() {
+function buildTransactionOverrides() {
+  async function prepareTransaction(transaction: any, privateKey: any) {
+    const nonce = parseInt(await getTransactionCount(RELAY_URL), 16);
+    const txToSign = { ...transaction, nonce };
+    return await signTransaction(txToSign, privateKey);
+  }
+
   return {
+    ['overwrites/eth_getBlockByHash/get-block-by-hash.io']: {
+      '0': transaction2930AndBlockHash.blockHash,
+    },
     ['overwrites/eth_getTransactionByHash/get-access-list.io']: {
       '0': transaction2930AndBlockHash.transactionHash,
     },
@@ -53,11 +66,23 @@ async function buildTransactionOverrides() {
     ['overwrites/eth_getTransactionByHash/get-legacy-tx.io']: {
       '0': legacyTransactionAndBlockHash.transactionHash,
     },
+    ['overwrites/eth_getTransactionByHash/get-notfound-tx.io']: {
+      '0': NONEXISTENT_TX_HASH,
+    },
     ['overwrites/eth_getTransactionReceipt/get-legacy-receipt.io']: {
       '0': legacyTransactionAndBlockHash.transactionHash,
     },
-    ['overwrites/eth_getTransactionByHash/get-notfound-tx.io']: {
-      '0': NONEXISTENT_TX_HASH,
+    ['overwrites/eth_getTransactionReceipt/get-access-list.io']: {
+      '0': transaction2930AndBlockHash.transactionHash,
+    },
+    ['overwrites/eth_getTransactionReceipt/get-dynamic-fee.io']: {
+      '0': transaction1559AndBlockHash.transactionHash,
+    },
+    ['overwrites/eth_getTransactionReceipt/get-legacy-contract.io']: {
+      '0': createContractLegacyTransactionAndBlockHash.transactionHash,
+    },
+    ['overwrites/eth_getTransactionReceipt/get-legacy-input.io']: {
+      '0': createContractLegacyTransactionAndBlockHash.transactionHash,
     },
     ['overwrites/eth_getBalance/get-balance.io']: {
       '0': ETHEREUM_NETWORK_ACCOUNT_HASH,
@@ -76,23 +101,19 @@ async function buildTransactionOverrides() {
       '1': legacyTransactionAndBlockHash.transactionIndex,
     },
     ['overwrites/eth_sendRawTransaction/send-legacy-transaction.io']: {
-      '0': await prepareTransaction(legacyTransaction, localNodeAccountPrivateKey),
+      '0': () => prepareTransaction(legacyTransaction, localNodeAccountPrivateKey),
     },
     ['overwrites/eth_sendRawTransaction/send-dynamic-fee-transaction.io']: {
-      '0': await prepareTransaction(transaction1559, localNodeAccountPrivateKey),
+      '0': () => prepareTransaction(transaction1559, localNodeAccountPrivateKey),
     },
     ['overwrites/eth_sendRawTransaction/send-dynamic-fee-access-list-transaction.io']: {
-      '0': await prepareTransaction(transaction1559_2930, localNodeAccountPrivateKey),
+      '0': () => prepareTransaction(transaction1559_2930, localNodeAccountPrivateKey),
     },
     ['overwrites/eth_sendRawTransaction/send-blob-tx.io']: {
-      '0': await prepareTransaction(legacyTransaction, localNodeAccountPrivateKey),
+      '0': () => prepareTransaction(legacyTransaction, localNodeAccountPrivateKey),
     },
     ['overwrites/eth_sendRawTransaction/send-access-list-transaction.io']: {
-      '0': await prepareTransaction(transaction2930, localNodeAccountPrivateKey),
+      '0': () => prepareTransaction(transaction2930, localNodeAccountPrivateKey),
     },
   };
-  async function prepareTransaction(transaction: any, privateKey: any) {
-    legacyTransaction.nonce = parseInt(await getTransactionCount(RELAY_URL), 16);
-    return await signTransaction(transaction, privateKey);
-  }
 }
