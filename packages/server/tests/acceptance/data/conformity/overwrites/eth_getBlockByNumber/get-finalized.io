@@ -1,4 +1,15 @@
 // gets block finalized
+// Reason for override: This test uses data included in the chain.rlp
+// https://github.com/ethereum/execution-apis/blob/main/tests/chain.rlp
+//
+// Since we do not replay those transactions before starting the tests, we need a separate test that simulates
+// the same scenario.
+//
+// Note: This is the original test file, modified for our test purposes:
+// https://github.com/ethereum/execution-apis/blob/main/tests/eth_getBlockByNumber/get-finalized.io
+//
+// In the wildcard collection, there are fields that depend on the current state of the network,
+// which changes with each test run.
 
 ## wildcard: result.hash, result.number, result.parentHash, result.size, result.timestamp
 
