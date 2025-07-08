@@ -1,10 +1,42 @@
 // sends a transaction with dynamic fee and access list
-// Reason for override: This test uses data included in the chain.rlp
-// https://github.com/ethereum/execution-apis/blob/main/tests/chain.rlp
 //
-// Since we do not replay those transactions before starting the tests, we need a separate test that simulates
-// the same scenario.
+// Reason for override: Combined EIP-1559 and EIP-2930 transactions are not supported on Hedera.
 //
+// The transaction was prepared with EIP-1559 (type: 0x2) and included an access list:
+//
+// const tx = {
+//     type: "0x2",
+//     maxFeePerGas, maxPriorityFeePerGas
+//     chainId, nonce, gasLimit,
+//     to, value,
+//     accessList: [
+//         {
+//             address: "0x67D8d32E9Bf1a9968a5ff53B87d777Aa8EBBEe69",
+//             storageKeys: [],
+//         },
+//     ],
+// };
+//
+// The transaction was successfully received by the Hedera mirror node:
+//
+// Response from mirror node (status=200):
+// method=GET
+// path=/contracts/results/0x1a60a6a335dfb2801c19ee64693769b5a1b156cad5ebcddc35267832324f7cfa
+//
+// Part of the response:
+// {
+//     "access_list": "0x",        // access list was ignored
+//     "chain_id": "0x12a",
+//     "type": 0,                  // transaction type downgraded to legacy
+//     "result": "SUCCESS",
+//     ...
+// }
+//
+// Although the transaction was signed and sent as type 0x2 with a dynamic fee and access list,
+// Hedera ignored both EIP-1559 fee parameters and the access list,
+// treating the transaction as a legacy type (type 0).
+// The field "access_list": "0x" confirms that Hedera currently does not support or process
+// access lists defined in EIP-2930 nor dynamic fee structure from EIP-1559.
 // Note: This is the original test file, modified for our test purposes:
 // https://github.com/ethereum/execution-apis/blob/main/tests/eth_sendRawTransaction/send-dynamic-fee-access-list-transaction.io
 
