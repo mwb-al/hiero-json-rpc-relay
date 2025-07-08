@@ -113,31 +113,43 @@ function checkObjectProperties(
   return false;
 }
 
-function checkValues(actual: unknown, expected: unknown, wildcards: string[], path = '') {
+function checkComplexTypes(actual: object | null, expected: object, wildcards: string[], path: string): boolean {
+  if (actual === null) {
+    return true;
+  }
+
+  const isExpectedArray = Array.isArray(expected);
+  const isActualArray = Array.isArray(actual);
+
+  if (isExpectedArray !== isActualArray) {
+    return true;
+  }
+
+  if (isExpectedArray) {
+    return checkArrayValues(actual as unknown[], expected as unknown[], wildcards, path);
+  }
+
+  return checkObjectProperties(actual as Record<string, unknown>, expected as Record<string, unknown>, wildcards, path);
+}
+
+function checkValues(actual: unknown, expected: unknown, wildcards: string[], path = ''): boolean {
   if (path === '' && expected && typeof expected === 'object' && (expected as ErrorResponse).error) {
     return checkErrorResponse(actual as Record<string, unknown>, expected as ErrorResponse);
   }
 
-  if (expected === null || expected === undefined) {
-    return actual !== null && actual !== undefined;
+  if (expected == null) {
+    return actual != null;
   }
 
   if (typeof actual !== typeof expected) {
     return true;
   }
 
-  if (typeof expected !== 'object') {
-    return arePrimitivesDifferent(actual, expected);
+  if (typeof expected === 'object') {
+    return checkComplexTypes(actual as object | null, expected, wildcards, path);
   }
 
-  if (Array.isArray(expected)) {
-    if (!Array.isArray(actual)) {
-      return true;
-    }
-    return checkArrayValues(actual, expected, wildcards, path);
-  }
-
-  return checkObjectProperties(actual as Record<string, unknown>, expected as Record<string, unknown>, wildcards, path);
+  return arePrimitivesDifferent(actual, expected);
 }
 
 export const findSchema = function (file: string): Schema | undefined {
