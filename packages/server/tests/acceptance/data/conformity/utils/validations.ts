@@ -5,8 +5,13 @@ import { expect } from 'chai';
 
 import { ErrorResponse, JsonRpcResponse, Method, Schema } from './interfaces';
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const execApisOpenRpcData = require('../../../../../../../openrpc_exec_apis.json');
+let execApisOpenRpcData: any = null;
+function getExecApisOpenRpcData() {
+  if (!execApisOpenRpcData) {
+    execApisOpenRpcData = require('../../../../../../../openrpc_exec_apis.json');
+  }
+  return execApisOpenRpcData;
+}
 
 const ajv = new Ajv({ strict: false });
 addFormats(ajv);
@@ -240,7 +245,8 @@ function hasValuesMismatch(actual: unknown, expected: unknown, wildcards: string
 }
 
 export const findSchema = function (file: string): Schema | undefined {
-  return (execApisOpenRpcData.methods as Method[]).find((method) => method.name === file)?.result?.schema;
+  const data = getExecApisOpenRpcData();
+  return (data.methods as Method[]).find((method) => method.name === file)?.result?.schema;
 };
 
 export function isResponseValid(schema: Schema, response: { result: unknown }): boolean {
