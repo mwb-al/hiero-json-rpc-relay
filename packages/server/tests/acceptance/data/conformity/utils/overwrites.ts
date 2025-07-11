@@ -17,6 +17,35 @@ import { JsonRpcRequest, Transaction } from './interfaces';
 import { legacyTransaction, transaction1559, transaction1559_2930, transaction2930 } from './transactions';
 import { getTransactionCount } from './utils';
 
+/**
+ * Updates request parameters for JSON-RPC requests based on predefined mappings.
+ * This function allows overriding specific parameters in JSON-RPC requests for testing purposes
+ * by using file-based mappings that correspond to specific test scenarios.
+ *
+ * @template T - The type of the resolved parameter value
+ * @param {string} fileName - The name of the test file (e.g., 'get-block-by-hash.io')
+ * @param {JsonRpcRequest} request - The JSON-RPC request object containing method and params
+ * @returns {Promise<JsonRpcRequest>} A promise that resolves to the updated JSON-RPC request
+ *
+ * @example
+ * ```typescript
+ * const request = {
+ *   jsonrpc: '2.0',
+ *   id: 1,
+ *   method: 'eth_getTransactionByHash',
+ *   params: ['0x...']
+ * };
+ *
+ * const updatedRequest = await updateRequestParams('get-legacy-tx.io', request);
+ * // The request.params[0] will be updated with the corresponding transaction hash
+ * ```
+ *
+ * @remarks
+ * The `buildTransactionOverrides` function provides a comprehensive mapping of test scenarios
+ * to their corresponding parameter overrides, including static values (transaction hashes,
+ * block hashes, account addresses) and dynamic functions that prepare and sign transactions
+ * with current nonces for `eth_sendRawTransaction` test cases.
+ */
 export async function updateRequestParams<T = unknown>(
   fileName: string,
   request: JsonRpcRequest,
