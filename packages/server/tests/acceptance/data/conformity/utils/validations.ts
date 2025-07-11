@@ -55,7 +55,7 @@ export function hasResponseFormatIssues(
   actualResponse: Record<string, unknown> | ErrorResponse | JsonRpcResponse,
   expectedResponse: Record<string, unknown> | string | ErrorResponse,
   wildcards: string[] = [],
-) {
+): boolean {
   let parsedExpectedResponse: Record<string, unknown> | ErrorResponse = expectedResponse as Record<string, unknown>;
   if (typeof expectedResponse === 'string') {
     try {
@@ -90,13 +90,17 @@ export function hasResponseFormatIssues(
     return true;
   }
 
-  return areValuesMatching(actualResponse, parsedExpectedResponse, wildcards);
+  return hasValuesMismatch(actualResponse, parsedExpectedResponse, wildcards);
 }
 
 /**
- * Checks if the actual response has the required error properties
+ * Checks if the actual response is missing required error properties
+ *
+ * @param actual - The actual response to check
+ * @param expected - The expected error response
+ * @returns {boolean} - Returns true if error properties are missing or mismatched, false if all required properties exist
  */
-function checkErrorResponse(actual: Record<string, unknown>, expected: ErrorResponse): boolean {
+function hasErrorResponseMismatch(actual: Record<string, unknown>, expected: ErrorResponse): boolean {
   if (!actual || typeof actual !== 'object' || !actual.error) {
     return true;
   }
@@ -115,14 +119,20 @@ function arePrimitivesDifferent(actual: unknown, expected: unknown): boolean {
 
 /**
  * Checks if two arrays have different values
+ *
+ * @param actual - The actual array from the response
+ * @param expected - The expected array to compare against
+ * @param wildcards - Array of property paths to ignore during comparison
+ * @param path - Current property path being evaluated
+ * @returns {boolean} - Returns true if arrays have different values, false if they match
  */
-function checkArrayValues(actual: unknown[], expected: unknown[], wildcards: string[], path: string): boolean {
+function hasArrayValuesMismatch(actual: unknown[], expected: unknown[], wildcards: string[], path: string): boolean {
   if (actual.length !== expected.length) {
     return true;
   }
 
   for (let i = 0; i < expected.length; i++) {
-    if (areValuesMatching(actual[i], expected[i], wildcards, `${path}[${i}]`)) {
+    if (hasValuesMismatch(actual[i], expected[i], wildcards, `${path}[${i}]`)) {
       return true;
     }
   }
@@ -130,9 +140,15 @@ function checkArrayValues(actual: unknown[], expected: unknown[], wildcards: str
 }
 
 /**
- * Checks if an object has all the required properties with matching values
+ * Checks if an object is missing required properties or has mismatched values
+ *
+ * @param actual - The actual object from the response
+ * @param expected - The expected object to compare against
+ * @param wildcards - Array of property paths to ignore during comparison
+ * @param path - Current property path being evaluated
+ * @returns {boolean} - Returns true if properties are missing or values are mismatched, false if all match
  */
-function checkObjectProperties(
+function hasObjectPropertiesMismatch(
   actual: Record<string, unknown>,
   expected: Record<string, unknown>,
   wildcards: string[],
@@ -146,14 +162,23 @@ function checkObjectProperties(
     if (!(key in actual)) {
       return true;
     }
-    if (areValuesMatching(actual[key], expected[key], wildcards, newPath)) {
+    if (hasValuesMismatch(actual[key], expected[key], wildcards, newPath)) {
       return true;
     }
   }
   return false;
 }
 
-function checkComplexTypes(actual: object | null, expected: object, wildcards: string[], path: string): boolean {
+/**
+ * Checks if complex types (objects or arrays) have mismatches in their structure or values
+ *
+ * @param actual - The actual object/array from the response
+ * @param expected - The expected object/array to compare against
+ * @param wildcards - Array of property paths to ignore during comparison
+ * @param path - Current property path being evaluated
+ * @returns {boolean} - Returns true if mismatches are found, false if values match
+ */
+function hasComplexTypeMismatch(actual: object | null, expected: object, wildcards: string[], path: string): boolean {
   if (actual === null) {
     return true;
   }
@@ -166,10 +191,15 @@ function checkComplexTypes(actual: object | null, expected: object, wildcards: s
   }
 
   if (isExpectedArray) {
-    return checkArrayValues(actual as unknown[], expected as unknown[], wildcards, path);
+    return hasArrayValuesMismatch(actual as unknown[], expected as unknown[], wildcards, path);
   }
 
-  return checkObjectProperties(actual as Record<string, unknown>, expected as Record<string, unknown>, wildcards, path);
+  return hasObjectPropertiesMismatch(
+    actual as Record<string, unknown>,
+    expected as Record<string, unknown>,
+    wildcards,
+    path,
+  );
 }
 
 /**
@@ -186,12 +216,12 @@ function checkComplexTypes(actual: object | null, expected: object, wildcards: s
  * - Error responses: Validates error structure when expected response contains an error property
  * - Null/undefined values: Handles null checks appropriately
  * - Type mismatches: Returns true (different) when types don't match
- * - Complex objects: Delegates to checkComplexTypes for arrays and objects
+ * - Complex objects: Delegates to hasComplexTypeMismatch for arrays and objects
  * - Primitive values: Uses direct comparison for primitive types
  */
-function areValuesMatching(actual: unknown, expected: unknown, wildcards: string[], path = ''): boolean {
+function hasValuesMismatch(actual: unknown, expected: unknown, wildcards: string[], path = ''): boolean {
   if (path === '' && expected && typeof expected === 'object' && (expected as ErrorResponse).error) {
-    return checkErrorResponse(actual as Record<string, unknown>, expected as ErrorResponse);
+    return hasErrorResponseMismatch(actual as Record<string, unknown>, expected as ErrorResponse);
   }
 
   if (expected == null) {
@@ -203,7 +233,7 @@ function areValuesMatching(actual: unknown, expected: unknown, wildcards: string
   }
 
   if (typeof expected === 'object') {
-    return checkComplexTypes(actual as object | null, expected, wildcards, path);
+    return hasComplexTypeMismatch(actual as object | null, expected, wildcards, path);
   }
 
   return arePrimitivesDifferent(actual, expected);
