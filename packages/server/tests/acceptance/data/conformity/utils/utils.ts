@@ -45,6 +45,10 @@ export async function sendRequestToRelay(
   } catch (error) {
     console.error(error);
     if (needError) {
+      if (axios.isAxiosError(error) && error.response?.data) {
+        return error.response.data;
+      }
+
       return {
         jsonrpc: '2.0',
         id: request.id,
