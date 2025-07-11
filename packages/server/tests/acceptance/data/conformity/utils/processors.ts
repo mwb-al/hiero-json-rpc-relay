@@ -4,7 +4,7 @@ import { expect } from 'chai';
 import { FileContent } from './interfaces';
 import { updateRequestParams } from './overwrites';
 import { sendRequestToRelay } from './utils';
-import { checkResponseFormat, findSchema, isResponseValid } from './validations';
+import { findSchema, hasResponseFormatIssues, isResponseValid } from './validations';
 
 /**
  * Splits a given input string into distinct segments representing the request, the response, and optional wildcard fields.
@@ -83,7 +83,7 @@ export async function processFileContent(relayUrl: string, directory: string, fi
 
   if (needError) {
     console.log('Validating an error response.');
-    const valid = checkResponseFormat(response, content.response, wildcards);
+    const valid = hasResponseFormatIssues(response, content.response, wildcards);
     expect(valid).to.be.false;
     console.log('Error response validation finished.');
   } else {
@@ -99,7 +99,7 @@ export async function processFileContent(relayUrl: string, directory: string, fi
       }
     } else {
       console.log('Using response format check (key-by-key comparison).');
-      const hasMissingKeys = checkResponseFormat(response, JSON.parse(content.response), wildcards);
+      const hasMissingKeys = hasResponseFormatIssues(response, JSON.parse(content.response), wildcards);
       console.log(`Missing keys check result: ${hasMissingKeys}`);
       expect(hasMissingKeys).to.be.false;
     }

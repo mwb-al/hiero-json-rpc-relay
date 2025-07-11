@@ -11,7 +11,47 @@ const execApisOpenRpcData = require('../../../../../../../openrpc_exec_apis.json
 const ajv = new Ajv({ strict: false });
 addFormats(ajv);
 
-export function checkResponseFormat(
+/**
+ * Validates response format by comparing actual response against expected response structure.
+ *
+ * @param actualResponse - The actual response received from the API call
+ * @param expectedResponse - The expected response structure to validate against (can be object, string, or ErrorResponse)
+ * @param wildcards - Array of property paths to ignore during validation (default: empty array)
+ * @returns {boolean} Returns true if the response format has issues (validation failed), false if format is valid
+ *
+ * @description
+ * This function performs comprehensive response validation including:
+ * - Parsing expected response if provided as string
+ * - Checking error state consistency between actual and expected responses
+ * - Missing key detection in response structure
+ * - Deep value comparison with wildcard support
+ *
+ * @example
+ * ```typescript
+ * const actualResponse = { result: "0x123", id: 1 };
+ * const expectedResponse = '{"result": "0x123", "id": 1}';
+ * const hasIssues = hasResponseFormatIssues(actualResponse, expectedResponse);
+ * console.log(hasIssues); // false - format is valid
+ * ```
+ *
+ * @example
+ * ```typescript
+ * const actualResponse = { result: "0x123" };
+ * const expectedResponse = { result: "0x123", id: 1 };
+ * const hasIssues = hasResponseFormatIssues(actualResponse, expectedResponse);
+ * console.log(hasIssues); // true - missing 'id' key
+ * ```
+ *
+ * @example
+ * ```typescript
+ * const actualResponse = { result: "0x123", timestamp: "2023-01-01" };
+ * const expectedResponse = { result: "0x123", timestamp: "2023-01-02" };
+ * const wildcards = ["timestamp"];
+ * const hasIssues = hasResponseFormatIssues(actualResponse, expectedResponse, wildcards);
+ * console.log(hasIssues); // false - timestamp ignored due to wildcard
+ * ```
+ */
+export function hasResponseFormatIssues(
   actualResponse: Record<string, unknown> | ErrorResponse | JsonRpcResponse,
   expectedResponse: Record<string, unknown> | string | ErrorResponse,
   wildcards: string[] = [],

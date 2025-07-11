@@ -34,7 +34,7 @@ import {
   transaction2930,
 } from './data/conformity/utils/transactions';
 import { getLatestBlockHash, sendRequestToRelay, signAndSendRawTransaction } from './data/conformity/utils/utils';
-import { checkResponseFormat, isResponseValid } from './data/conformity/utils/validations';
+import { hasResponseFormatIssues, isResponseValid } from './data/conformity/utils/validations';
 
 const directoryPath = path.resolve(__dirname, '../../../../node_modules/execution-apis/tests');
 const overwritesDirectoryPath = path.resolve(__dirname, 'data/conformity/overwrites');
@@ -60,14 +60,14 @@ const synthesizeTestCases = function (testCases: TestCases, updateParamIfNeeded:
       try {
         const req = updateParamIfNeeded(testName, JSON.parse(testCases[testName].request));
         const res = await sendRequestToRelay(RELAY_URL, req, false);
-        const hasMissingKeys: boolean = checkResponseFormat(res, JSON.parse(testCases[testName].response));
+        const isResFormatInvalid: boolean = hasResponseFormatIssues(res, JSON.parse(testCases[testName].response));
 
         if (schema && schema.pattern) {
           const check = isResponseValid(schema, res);
           expect(check).to.be.true;
         }
 
-        expect(hasMissingKeys).to.be.false;
+        expect(isResFormatInvalid).to.be.false;
         expect(isErrorStatusExpected).to.be.false;
       } catch (e: any) {
         expect(isErrorStatusExpected).to.be.true;
@@ -318,7 +318,7 @@ describe('@api-conformity', async function () {
             });
             await new Promise((r) => setTimeout(r, 500));
 
-            const hasMissingKeys: boolean = checkResponseFormat(response, JSON.parse(testCases[testName].response));
+            const hasMissingKeys: boolean = hasResponseFormatIssues(response, JSON.parse(testCases[testName].response));
             expect(hasMissingKeys).to.be.false;
           });
         }
