@@ -6,13 +6,13 @@ import { updateRequestParams } from './overwrites';
 import { sendRequestToRelay } from './utils';
 import { checkResponseFormat, findSchema, isResponseValid } from './validations';
 
+/**
+ * Splits a given input string into distinct segments representing the request, the response, and optional wildcard fields.
+ *
+ * @param {string} content - The input string to be segmented.
+ * @returns {{ request: string, response: string, wildcards: string[] }} - An object containing the separated request, response strings, and wildcard fields.
+ */
 export function splitReqAndRes(content: string) {
-  /**
-   * Splits a given input string into distinct segments representing the request, the response, and optional wildcard fields.
-   *
-   * @param {string} content - The input string to be segmented.
-   * @returns {{ request: string, response: string, wildcards: string[] }} - An object containing the separated request, response strings, and wildcard fields.
-   */
   const lines = content
     .split('\n')
     .map((line: string) => line.trim())
@@ -44,15 +44,26 @@ export function splitReqAndRes(content: string) {
   };
 }
 
+/**
+ * Processes file content for API testing by executing requests against a relay server
+ * and validating the responses according to various validation strategies.
+ *
+ * @param {string} relayUrl - The URL of the relay server to send requests to
+ * @param {string} directory - The directory path used for schema lookup
+ * @param {string} file - The name of the file being processed (used for logging)
+ * @param {FileContent} content - The file content object containing request, response, and wildcards
+ * @returns {Promise<void>} A promise that resolves when processing is complete
+ *
+ * @description
+ * This function performs the following operations:
+ * 1. Updates request parameters based on the file context
+ * 2. Sends the modified request to the relay server
+ * 3. Validates the response using one of three strategies:
+ *    - Error response validation (expects validation to fail)
+ *    - Schema validation (when schema exists and no wildcards)
+ *    - Response format validation (key-by-key comparison with wildcards support)
+ */
 export async function processFileContent(relayUrl: string, directory: string, file: string, content: FileContent) {
-  /**
-   * Processes a file from the execution apis repo
-   * containing test request and response data.
-   *
-   * @param {string} file - The name of the file being processed.
-   * @param {Object} content - The content of the file, consisting of request and response data.
-   * @returns {Array<string>} - An array of missing keys in the response data.
-   */
   console.log('Executing for ', file);
   console.log('Original request:', content.request);
   const modifiedRequest = await updateRequestParams(file, JSON.parse(content.request));
