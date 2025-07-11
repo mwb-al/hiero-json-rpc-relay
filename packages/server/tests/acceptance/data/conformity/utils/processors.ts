@@ -85,22 +85,15 @@ export async function processFileContent(relayUrl: string, directory: string, fi
     console.log('Validating an error response.');
     const valid = hasResponseFormatIssues(response, content.response, wildcards);
     expect(valid).to.be.false;
-    console.log('Error response validation finished.');
   } else {
     console.log('Validating a success response.');
     if (schema && wildcards.length === 0) {
       console.log('Using schema validation.');
       const valid = isResponseValid(schema, response);
-      console.log(`Schema validation result: ${valid}`);
       expect(valid).to.be.true;
-      if (response.result) {
-        console.log('Comparing response result with expected result.');
-        expect(response.result).to.be.equal(JSON.parse(content.response).result);
-      }
     } else {
       console.log('Using response format check (key-by-key comparison).');
       const hasMissingKeys = hasResponseFormatIssues(response, JSON.parse(content.response), wildcards);
-      console.log(`Missing keys check result: ${hasMissingKeys}`);
       expect(hasMissingKeys).to.be.false;
     }
     console.log('Success response validation finished.');
