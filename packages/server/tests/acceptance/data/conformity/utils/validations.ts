@@ -50,7 +50,7 @@ export function checkResponseFormat(
     return true;
   }
 
-  return checkValues(actualResponse, parsedExpectedResponse, wildcards);
+  return areValuesMatching(actualResponse, parsedExpectedResponse, wildcards);
 }
 
 /**
@@ -82,7 +82,7 @@ function checkArrayValues(actual: unknown[], expected: unknown[], wildcards: str
   }
 
   for (let i = 0; i < expected.length; i++) {
-    if (checkValues(actual[i], expected[i], wildcards, `${path}[${i}]`)) {
+    if (areValuesMatching(actual[i], expected[i], wildcards, `${path}[${i}]`)) {
       return true;
     }
   }
@@ -106,7 +106,7 @@ function checkObjectProperties(
     if (!(key in actual)) {
       return true;
     }
-    if (checkValues(actual[key], expected[key], wildcards, newPath)) {
+    if (areValuesMatching(actual[key], expected[key], wildcards, newPath)) {
       return true;
     }
   }
@@ -132,7 +132,24 @@ function checkComplexTypes(actual: object | null, expected: object, wildcards: s
   return checkObjectProperties(actual as Record<string, unknown>, expected as Record<string, unknown>, wildcards, path);
 }
 
-function checkValues(actual: unknown, expected: unknown, wildcards: string[], path = ''): boolean {
+/**
+ * Compares actual and expected values to determine if they match according to validation rules.
+ *
+ * @param actual - The actual value received from the response
+ * @param expected - The expected value to compare against
+ * @param wildcards - Array of property paths that should be ignored during comparison
+ * @param path - Current property path being evaluated (used for nested object traversal)
+ * @returns {boolean} - Returns true if values are different/don't match, false if they match
+ *
+ * @description
+ * This function performs deep comparison between actual and expected values with special handling for:
+ * - Error responses: Validates error structure when expected response contains an error property
+ * - Null/undefined values: Handles null checks appropriately
+ * - Type mismatches: Returns true (different) when types don't match
+ * - Complex objects: Delegates to checkComplexTypes for arrays and objects
+ * - Primitive values: Uses direct comparison for primitive types
+ */
+function areValuesMatching(actual: unknown, expected: unknown, wildcards: string[], path = ''): boolean {
   if (path === '' && expected && typeof expected === 'object' && (expected as ErrorResponse).error) {
     return checkErrorResponse(actual as Record<string, unknown>, expected as ErrorResponse);
   }
