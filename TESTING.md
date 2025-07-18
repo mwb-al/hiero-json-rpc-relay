@@ -8,7 +8,7 @@ The conformity tests ensure that the Hedera JSON-RPC relay correctly implements 
 
 1. The relay correctly handles JSON-RPC requests according to the Ethereum specification
 2. The responses match the expected format and content
-3. Error handling follows the JSON-RPC 2.0 specification
+3. Error handling follows the [JSON-RPC 2.0 Specification](https://www.jsonrpc.org/specification)
 4. The relay behaves correctly for both supported and unsupported methods
 
 ## Test Structure
