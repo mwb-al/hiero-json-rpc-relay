@@ -8,6 +8,8 @@
 [![RPC API Methods](https://img.shields.io/badge/websocket-docs-green.svg)](docs/live-events-api.md)
 [![Discord](https://img.shields.io/badge/discord-join%20chat-blue.svg)](https://hedera.com/discord)
 [![Made With](https://img.shields.io/badge/made_with-typescript-blue)](https://github.com/hiero-ledger/hiero-json-rpc-relay/)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/hiero-ledger/hiero-json-rpc-relay/badge)](https://scorecard.dev/viewer/?uri=github.com/hiero-ledger/hiero-json-rpc-relay)
+[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/10697/badge)](https://bestpractices.coreinfrastructure.org/projects/10697)
 [![License](https://img.shields.io/badge/license-apache2-blue.svg)](LICENSE)
 
 </div>
@@ -75,8 +77,6 @@ The relay has a suite of acceptance tests that may be run to confirm E2E operati
 The JSON RPC Relay offers multiple environment variable configuration porperties to configure the relay for appropriate use.
 More details can be found at [Configuration](/docs/configuration.md)
 As in the case of a fully deployed relay the acceptance tests utilize the `.env` file. See the [Configuration](#configuration) for setup details.
-
-Note: Read more about `DEV_MODE` which provides optimal local and developer testing configurations [here](docs/dev-mode.md)
 
 The following table highlights some initial configuration values to consider
 

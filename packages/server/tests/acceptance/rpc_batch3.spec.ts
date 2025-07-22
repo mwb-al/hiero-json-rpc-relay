@@ -527,43 +527,40 @@ describe('@api-batch-3 RPC Server Acceptance Tests', function () {
             expect(res).to.eq(basicContractJson.deployedBytecode);
           });
 
-          // value is processed only when eth_call goes through the mirror node
-          if (!ConfigService.get('ETH_CALL_DEFAULT_TO_CONSENSUS_NODE')) {
-            it('010 Should call msgValue', async function () {
-              const callData = {
-                ...defaultCallData,
-                data: '0xddf363d7',
-                value: ONE_THOUSAND_TINYBARS,
-              };
+          it('010 Should call msgValue', async function () {
+            const callData = {
+              ...defaultCallData,
+              data: '0xddf363d7',
+              value: ONE_THOUSAND_TINYBARS,
+            };
 
-              const res = await relay.call(RelayCall.ETH_ENDPOINTS.ETH_CALL, [callData, 'latest'], requestId);
-              expect(res).to.eq('0x00000000000000000000000000000000000000000000000000000000000003e8');
-            });
+            const res = await relay.call(RelayCall.ETH_ENDPOINTS.ETH_CALL, [callData, 'latest'], requestId);
+            expect(res).to.eq('0x00000000000000000000000000000000000000000000000000000000000003e8');
+          });
 
-            // test is pending until fallback workflow to consensus node is removed, because this flow works when calling to consensus
-            xit('011 Should fail when calling msgValue with more value than available balance', async function () {
-              const callData = {
-                ...defaultCallData,
-                data: '0xddf363d7',
-                value: '0x3e80000000',
-              };
-              const errorType = predefined.CONTRACT_REVERT();
-              const args = [RelayCall.ETH_ENDPOINTS.ETH_CALL, [callData, 'latest'], requestId];
+          // test is pending until fallback workflow to consensus node is removed, because this flow works when calling to consensus
+          xit('011 Should fail when calling msgValue with more value than available balance', async function () {
+            const callData = {
+              ...defaultCallData,
+              data: '0xddf363d7',
+              value: '0x3e80000000',
+            };
+            const errorType = predefined.CONTRACT_REVERT();
+            const args = [RelayCall.ETH_ENDPOINTS.ETH_CALL, [callData, 'latest'], requestId];
 
-              await Assertions.assertPredefinedRpcError(errorType, relay.call, true, relay, args);
-            });
+            await Assertions.assertPredefinedRpcError(errorType, relay.call, true, relay, args);
+          });
 
-            it("012 should work for wrong 'from' field", async function () {
-              const callData = {
-                from: '0x0000000000000000000000000000000000000000',
-                to: callerAddress,
-                data: '0x0ec1551d',
-              };
+          it("012 should work for wrong 'from' field", async function () {
+            const callData = {
+              from: '0x0000000000000000000000000000000000000000',
+              to: callerAddress,
+              data: '0x0ec1551d',
+            };
 
-              const res = await relay.call(RelayCall.ETH_ENDPOINTS.ETH_CALL, [callData, 'latest'], requestId);
-              expect(res).to.eq('0x0000000000000000000000000000000000000000000000000000000000000004');
-            });
-          }
+            const res = await relay.call(RelayCall.ETH_ENDPOINTS.ETH_CALL, [callData, 'latest'], requestId);
+            expect(res).to.eq('0x0000000000000000000000000000000000000000000000000000000000000004');
+          });
         });
       }
     });
@@ -767,55 +764,6 @@ describe('@api-batch-3 RPC Server Acceptance Tests', function () {
 
       const res = await Utils.ethCallWRetries(relay, callData, 'latest', requestId);
       expect(res).to.eq(RESULT_TRUE);
-    });
-
-    describe('eth_call with force-to-consensus-by-selector logic', () => {
-      // context: The `IHRC719.isAssociated()` function is a new feature which is, at the moment, fully supported only by the Consensus node and not yet by the Mirror node.
-      // Since `IHRC719.isAssociated()` is a view function, requests for this function are typically directed to the Mirror node by default.
-      // This acceptance test ensures that the new force-to-consensus-by-selector logic correctly routes requests for `IHRC719.isAssociated()`
-      // through the Consensus node rather than the Mirror node when using the `eth_call` endpoint.
-
-      let initialEthCallSelectorsAlwaysToConsensus: any, hrc719Contract: ethers.Contract;
-
-      before(async () => {
-        initialEthCallSelectorsAlwaysToConsensus = ConfigService.get('ETH_CALL_CONSENSUS_SELECTORS');
-
-        hrc719Contract = await Utils.deployContract(
-          HRC719ContractJson.abi,
-          HRC719ContractJson.bytecode,
-          accounts[0].wallet,
-        );
-      });
-
-      after(() => {
-        ConfigServiceTestHelper.dynamicOverride(
-          'ETH_CALL_CONSENSUS_SELECTORS',
-          initialEthCallSelectorsAlwaysToConsensus,
-        );
-      });
-
-      it('should NOT allow eth_call to process IHRC719.isAssociated() method', async () => {
-        const selectorsList = ConfigService.get('ETH_CALL_CONSENSUS_SELECTORS');
-        expect(selectorsList.length).to.eq(0);
-
-        // If the selector for `isAssociated` is not included in `ETH_CALL_CONSENSUS_SELECTORS`, the request will fail with a `CALL_EXCEPTION` error code.
-        await expect(hrc719Contract.isAssociated(tokenAddress)).to.eventually.be.rejected.and.have.property(
-          'code',
-          'CALL_EXCEPTION',
-        );
-      });
-
-      it('should allow eth_call to successfully process IHRC719.isAssociated() method', async () => {
-        const isAssociatedSelector = (await hrc719Contract.isAssociated.populateTransaction(tokenAddress)).data.slice(
-          2,
-          10,
-        );
-
-        // Add the selector for isAssociated to ETH_CALL_CONSENSUS_SELECTORS to ensure isAssociated() passes
-        ConfigServiceTestHelper.dynamicOverride('ETH_CALL_CONSENSUS_SELECTORS', [isAssociatedSelector]);
-        const isAssociatedResult = await hrc719Contract.isAssociated(tokenAddress);
-        expect(isAssociatedResult).to.be.false; // associate status of the token with the caller
-      });
     });
   });
 

@@ -3,13 +3,12 @@
 import { Logger } from 'pino';
 
 import { Utils } from '../../utils';
-import { RPC_PARAM_VALIDATION_RULES_KEY } from '../decorators';
 import { JsonRpcError } from '../errors/JsonRpcError';
 import { predefined } from '../errors/JsonRpcError';
 import { MirrorNodeClientError } from '../errors/MirrorNodeClientError';
 import { SDKClientError } from '../errors/SDKClientError';
 import { OperationHandler, RequestDetails, RpcMethodRegistry } from '../types';
-import { Validator } from '../validators';
+import { RPC_PARAM_VALIDATION_RULES_KEY, validateParams } from '../validators';
 
 /**
  * Dispatches JSON-RPC method calls to their appropriate handlers
@@ -98,14 +97,14 @@ export class RpcMethodDispatcher {
     const methodParamSchemas = operationHandler[RPC_PARAM_VALIDATION_RULES_KEY];
 
     if (methodParamSchemas) {
-      if (this.logger.isLevelEnabled('debug')) {
-        this.logger.debug(
+      if (this.logger.isLevelEnabled('info')) {
+        this.logger.info(
           `${
             requestDetails.formattedRequestId
           } Validating method parameters for ${rpcMethodName}, params: ${JSON.stringify(rpcMethodParams)}`,
         );
       }
-      Validator.validateParams(rpcMethodParams, methodParamSchemas);
+      validateParams(rpcMethodParams, methodParamSchemas);
     }
 
     return operationHandler;
