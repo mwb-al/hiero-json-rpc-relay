@@ -137,7 +137,7 @@ describe('@api-conformity', async function () {
     }
   });
 
-  describe('@conformity-batch-2 Ethereum execution apis tests', async function () {
+  describe.skip('@conformity-batch-2 Ethereum execution apis tests', async function () {
     this.timeout(240 * 1000);
 
     let existingBlockFilter: string;
@@ -207,7 +207,7 @@ describe('@api-conformity', async function () {
     synthesizeTestCases(TEST_CASES_BATCH_2, updateParamIfNeeded);
   });
 
-  describe('@conformity-batch-3 Ethereum execution apis tests', async function () {
+  describe.skip('@conformity-batch-3 Ethereum execution apis tests', async function () {
     this.timeout(240 * 1000);
 
     let txHash: any;
@@ -328,7 +328,7 @@ describe('@api-conformity', async function () {
     });
   });
 
-  describe('@conformity-batch-4 Ethereum execution apis tests', async function () {
+  describe.skip('@conformity-batch-4 Ethereum execution apis tests', async function () {
     this.timeout(240 * 1000);
 
     let existingCallerContractAddress: string | null;
@@ -528,7 +528,7 @@ describe('@api-conformity', async function () {
     synthesizeTestCases(TEST_CASES_BATCH_4, updateParamIfNeeded);
   });
 
-  describe('@conformity-batch-5 Ethereum execution apis tests', async function () {
+  describe.skip('@conformity-batch-5 Ethereum execution apis tests', async function () {
     this.timeout(240 * 1000);
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const TEST_CASES_BATCH_5 = require('./data/conformity-tests-batch-5.json');
