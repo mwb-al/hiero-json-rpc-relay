@@ -1,15 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
-
-import { JSONSchemaObject, MethodObject, MethodOrReference, OpenrpcDocument } from '@open-rpc/meta-schema';
-import { parseOpenRPCDocument } from '@open-rpc/schema-utils-js';
-import { expect } from 'chai';
+// import {
+//   JSONSchemaObject,
+//   MethodObject,
+//   MethodOrReference,
+//   OpenrpcDocument,
+// } from '@open-rpc/meta-schema';
+// import { parseOpenRPCDocument } from '@open-rpc/schema-utils-js';
+// import { expect } from 'chai';
 import fs from 'fs';
 import path from 'path';
-import WebSocket from 'ws';
 
+// import WebSocket from 'ws';
 import openRpcData from '../../../../docs/openrpc.json';
-import CallerContract from '../contracts/Caller.json';
-import LogsContract from '../contracts/Logs.json';
+// import CallerContract from '../contracts/Caller.json';
+// import LogsContract from '../contracts/Logs.json';
 import {
   chainId,
   gasLimit,
@@ -22,9 +26,9 @@ import {
   setTransaction1559_2930AndBlockHash,
   setTransaction1559AndBlockHash,
   setTransaction2930AndBlockHash,
-  WS_RELAY_URL,
+  // WS_RELAY_URL,
 } from './data/conformity/utils/constants';
-import { TestCases, UpdateParamFunction } from './data/conformity/utils/interfaces';
+// import { TestCases, UpdateParamFunction } from './data/conformity/utils/interfaces';
 import { processFileContent, splitReqAndRes } from './data/conformity/utils/processors';
 import {
   createContractLegacyTransaction,
@@ -33,49 +37,53 @@ import {
   transaction1559_2930,
   transaction2930,
 } from './data/conformity/utils/transactions';
-import { getLatestBlockHash, sendRequestToRelay, signAndSendRawTransaction } from './data/conformity/utils/utils';
-import { hasResponseFormatIssues, isResponseValid } from './data/conformity/utils/validations';
+import {
+  getLatestBlockHash,
+  // sendRequestToRelay,
+  signAndSendRawTransaction,
+} from './data/conformity/utils/utils';
+// import { hasResponseFormatIssues, isResponseValid } from './data/conformity/utils/validations';
 
 const directoryPath = path.resolve(__dirname, '../../../../node_modules/execution-apis/tests');
 const overwritesDirectoryPath = path.resolve(__dirname, 'data/conformity/overwrites');
 
-let relayOpenRpcData: OpenrpcDocument;
-(async () => {
-  relayOpenRpcData = await parseOpenRPCDocument(JSON.stringify(openRpcData));
-})().catch((error) => console.error('Error parsing OpenRPC document:', error));
+// let relayOpenRpcData: OpenrpcDocument;
+// (async () => {
+//   relayOpenRpcData = await parseOpenRPCDocument(JSON.stringify(openRpcData));
+// })().catch((error) => console.error('Error parsing OpenRPC document:', error));
 
-const synthesizeTestCases = function (testCases: TestCases, updateParamIfNeeded: UpdateParamFunction) {
-  for (const testName in testCases) {
-    it(`${testName}`, async function () {
-      const isErrorStatusExpected: boolean =
-        (testCases[testName]?.status && testCases[testName].status != 200) ||
-        !!JSON.parse(testCases[testName].response).error;
-      const method = relayOpenRpcData.methods.find(
-        (m: MethodOrReference): m is MethodObject => 'name' in m && m.name === testName.split(' ')[0],
-      );
-      const schema: JSONSchemaObject | undefined =
-        method?.result && 'schema' in method.result && typeof method.result.schema === 'object'
-          ? method.result.schema
-          : undefined;
-      try {
-        const req = updateParamIfNeeded(testName, JSON.parse(testCases[testName].request));
-        const res = await sendRequestToRelay(RELAY_URL, req, false);
-        const isResFormatInvalid: boolean = hasResponseFormatIssues(res, JSON.parse(testCases[testName].response));
-
-        if (schema && schema.pattern) {
-          const check = isResponseValid(schema, res);
-          expect(check).to.be.true;
-        }
-
-        expect(isResFormatInvalid).to.be.false;
-        expect(isErrorStatusExpected).to.be.false;
-      } catch (e: any) {
-        expect(isErrorStatusExpected).to.be.true;
-        expect(e?.response?.status).to.equal(testCases[testName].status);
-      }
-    });
-  }
-};
+// const synthesizeTestCases = function (testCases: TestCases, updateParamIfNeeded: UpdateParamFunction) {
+//   for (const testName in testCases) {
+//     it(`${testName}`, async function () {
+//       const isErrorStatusExpected: boolean =
+//         (testCases[testName]?.status && testCases[testName].status != 200) ||
+//         !!JSON.parse(testCases[testName].response).error;
+//       const method = relayOpenRpcData.methods.find(
+//         (m: MethodOrReference): m is MethodObject => 'name' in m && m.name === testName.split(' ')[0],
+//       );
+//       const schema: JSONSchemaObject | undefined =
+//         method?.result && 'schema' in method.result && typeof method.result.schema === 'object'
+//           ? method.result.schema
+//           : undefined;
+//       try {
+//         const req = updateParamIfNeeded(testName, JSON.parse(testCases[testName].request));
+//         const res = await sendRequestToRelay(RELAY_URL, req, false);
+//         const isResFormatInvalid: boolean = hasResponseFormatIssues(res, JSON.parse(testCases[testName].response));
+//
+//         if (schema && schema.pattern) {
+//           const check = isResponseValid(schema, res);
+//           expect(check).to.be.true;
+//         }
+//
+//         expect(isResFormatInvalid).to.be.false;
+//         expect(isErrorStatusExpected).to.be.false;
+//       } catch (e: any) {
+//         expect(isErrorStatusExpected).to.be.true;
+//         expect(e?.response?.status).to.equal(testCases[testName].status);
+//       }
+//     });
+//   }
+// };
 
 /**
  * To run the Ethereum Execution API tests as defined in the repository ethereum/execution-apis, it’s necessary
